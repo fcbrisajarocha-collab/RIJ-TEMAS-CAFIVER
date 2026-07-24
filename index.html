@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Junta de 10 Minutos · Temas Diarios · Cafiver</title>
+
+<!-- Firebase (compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg:#14110E;            /* espresso profundo */
+  --panel:#1E1A16;
+  --panel-2:#262019;
+  --cream:#F5F0E6;
+  --cream-dim:#C9BFB0;
+  --line:#38302A;
+  --muted:#8C8177;
+
+  --seg:#E8871E;   /* Seguridad Industrial */
+  --cal:#3B6BFF;   /* Calidad */
+  --ino:#12B0AE;   /* Inocuidad */
+  --amb:#4FB05A;   /* Medio Ambiente */
+
+  --ok:#4FB05A;
+  --pend:#4A4038;
+
+  --mono:'IBM Plex Mono',monospace;
+  --disp:'Space Grotesk',sans-serif;
+  --body:'Inter',sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg);
+  color:var(--cream);
+  font-family:var(--body);
+  -webkit-font-smoothing:antialiased;
+  line-height:1.5;
+}
+h1,h2,h3{font-family:var(--disp);margin:0;font-weight:600}
+button{font-family:var(--body);cursor:pointer;border:none}
+input,textarea,select{font-family:var(--body)}
+
+/* ---------- Header ---------- */
+header{
+  position:sticky;top:0;z-index:30;
+  background:linear-gradient(180deg,#14110E 0%,#14110ef2 100%);
+  border-bottom:1px solid var(--line);
+  backdrop-filter:blur(6px);
+}
+.head-in{max-width:1180px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.mark{
+  width:40px;height:40px;flex:none;border-radius:10px;
+  background:linear-gradient(135deg,var(--seg),#B85c00);
+  display:grid;place-items:center;font-family:var(--disp);font-weight:700;color:#14110E;font-size:15px;
+  box-shadow:inset 0 0 0 1px #ffffff22;
+}
+.brand h1{font-size:17px;letter-spacing:-.2px;line-height:1.1}
+.brand .sub{font-family:var(--mono);font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-top:2px}
+.spacer{flex:1}
+.fb-badge{font-family:var(--mono);font-size:10px;padding:5px 9px;border-radius:99px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.fb-badge.on{color:var(--ok);border-color:#4FB05A55}
+.fb-badge.off{color:var(--seg);border-color:#E8871E55}
+
+/* ---------- Tabs ---------- */
+.tabs{display:flex;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:5px}
+.tab{
+  padding:9px 16px;border-radius:8px;background:transparent;color:var(--cream-dim);
+  font-weight:600;font-size:13.5px;letter-spacing:.2px;transition:.15s;
+}
+.tab:hover{color:var(--cream)}
+.tab.active{background:var(--cream);color:#14110E}
+
+/* ---------- Layout ---------- */
+main{max-width:1180px;margin:0 auto;padding:26px 20px 80px}
+.view{display:none;animation:fade .25s ease}
+.view.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.controls{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-bottom:22px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:1.4px;color:var(--muted)}
+select,input[type=text],input[type=password],textarea{
+  background:var(--panel);border:1px solid var(--line);color:var(--cream);
+  border-radius:9px;padding:10px 12px;font-size:14px;outline:none;transition:.15s;
+}
+select:focus,input:focus,textarea:focus{border-color:var(--seg);box-shadow:0 0 0 3px #E8871E22}
+select{min-width:150px;cursor:pointer}
+textarea{width:100%;resize:vertical;line-height:1.55}
+
+.btn{
+  background:var(--cream);color:#14110E;font-weight:700;font-size:14px;
+  padding:11px 20px;border-radius:9px;transition:.15s;letter-spacing:.2px;
+}
+.btn:hover{transform:translateY(-1px)}
+.btn.ghost{background:transparent;color:var(--cream);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--cream)}
+.btn.sm{padding:8px 14px;font-size:13px}
+
+/* ---------- Present cards ---------- */
+.present-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.present-head .when{font-family:var(--mono);font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:2px}
+.present-head h2{font-size:30px;letter-spacing:-.6px;margin-top:4px}
+
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:820px){.cards{grid-template-columns:1fr}}
+
+.card{
+  background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;
+  border-top:4px solid var(--acc,#666);display:flex;flex-direction:column;min-height:150px;
+}
+.card .c-head{display:flex;align-items:center;gap:10px;padding:14px 16px 10px}
+.dot{width:12px;height:12px;border-radius:4px;background:var(--acc);flex:none}
+.card .c-area{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--acc);font-weight:600}
+.card .c-tema{font-family:var(--disp);font-size:19px;font-weight:600;padding:0 16px 4px;letter-spacing:-.3px}
+.card .c-body{padding:6px 16px 16px;color:var(--cream-dim);font-size:14.5px;white-space:pre-wrap;flex:1}
+.card .c-foot{padding:10px 16px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.card .c-foot a{color:var(--acc);font-size:13px;text-decoration:none;font-weight:600;word-break:break-all}
+.card .c-foot a:hover{text-decoration:underline}
+.card .meta{font-family:var(--mono);font-size:10.5px;color:var(--muted)}
+/* ---------- Avisos ---------- */
+.avisos-wrap{margin-bottom:22px;display:flex;flex-direction:column;gap:10px}
+.aviso{
+  background:var(--panel);border:1px solid var(--line);border-radius:12px;
+  border-left:5px solid var(--acc,#888);padding:14px 16px;
+}
+.aviso.urg{background:#2A1710;border-color:#E8871E55;border-left-color:#E8871E}
+.av-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.av-tag{
+  font-family:var(--mono);font-size:9.5px;letter-spacing:1.4px;text-transform:uppercase;font-weight:600;
+  padding:3px 8px;border-radius:5px;background:var(--acc);color:#14110E;
+}
+.av-tit{font-family:var(--disp);font-size:17px;font-weight:600;letter-spacing:-.2px;flex:1;min-width:200px}
+.av-msg{color:var(--cream-dim);font-size:14.5px;white-space:pre-wrap;margin-bottom:8px}
+.av-meta{font-family:var(--mono);font-size:10.5px;color:var(--muted)}
+.av-foot{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.av-chips{display:flex;gap:6px;flex-wrap:wrap;flex:1}
+.chip{
+  font-family:var(--mono);font-size:10px;padding:4px 9px;border-radius:99px;
+  border:1px solid var(--line);color:var(--muted);cursor:pointer;transition:.15s;background:transparent;
+}
+.chip:hover{border-color:var(--cream);color:var(--cream)}
+.chip.done{background:#20372A;border-color:#4FB05A55;color:var(--ok);cursor:default}
+.av-empty{
+  border:1px dashed var(--line);border-radius:12px;padding:16px;text-align:center;
+  color:var(--muted);font-size:13.5px;
+}
+.av-list{display:flex;flex-direction:column;gap:10px;margin-top:18px}
+.av-admin{display:flex;gap:8px}
+.av-del{background:transparent;border:1px solid var(--line);color:var(--muted);font-family:var(--mono);font-size:10px;padding:4px 9px;border-radius:6px}
+.av-del:hover{border-color:var(--seg);color:var(--seg)}
+.av-vencido{opacity:.5}
+.pill-count{
+  font-family:var(--mono);font-size:9.5px;background:var(--seg);color:#14110E;font-weight:700;
+  border-radius:99px;padding:2px 7px;margin-left:6px;
+}
+
+.card.empty{opacity:.55;border-style:dashed}
+.card.empty .c-body{font-style:italic;color:var(--muted)}
+
+/* preview Drive */
+.prev{margin:0 16px 14px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#0F0D0B;position:relative}
+.prev img{display:block;width:100%;height:auto;max-height:340px;object-fit:contain;background:#0F0D0B}
+.prev iframe{display:block;width:100%;height:320px;border:0;background:#0F0D0B}
+.prev .pv-bar{
+  position:absolute;top:8px;right:8px;display:flex;gap:6px;z-index:2;
+}
+.pv-btn{
+  background:#14110Ecc;border:1px solid var(--line);color:var(--cream);
+  font-family:var(--mono);font-size:10px;padding:5px 9px;border-radius:6px;backdrop-filter:blur(4px);
+}
+.pv-btn:hover{border-color:var(--cream)}
+.pv-fail{padding:18px 16px;font-size:13px;color:var(--muted);font-family:var(--mono)}
+.drive-hint{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:5px;line-height:1.6}
+.drive-hint b{color:var(--acc)}
+.folder-link{
+  display:inline-flex;align-items:center;gap:7px;background:var(--panel-2);border:1px solid var(--line);
+  color:var(--cream);border-radius:9px;padding:9px 14px;font-size:13px;font-weight:600;text-decoration:none;transition:.15s;
+}
+.folder-link:hover{border-color:var(--acc)}
+
+.agenda{
+  background:var(--panel-2);border:1px solid var(--line);border-radius:12px;
+  padding:14px 18px;margin-bottom:20px;display:flex;gap:22px;flex-wrap:wrap;align-items:center;
+}
+.agenda .step{display:flex;align-items:center;gap:9px}
+.agenda .n{font-family:var(--mono);font-weight:600;font-size:12px;color:#14110E;background:var(--cream);border-radius:6px;padding:3px 8px}
+.agenda .lbl{font-size:13.5px;color:var(--cream-dim)}
+.agenda .tit{font-family:var(--mono);font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-right:4px}
+
+/* ---------- Area picker ---------- */
+.area-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:6px}
+@media(max-width:720px){.area-grid{grid-template-columns:1fr 1fr}}
+.area-btn{
+  background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 14px;text-align:left;
+  color:var(--cream);transition:.15s;border-left:4px solid var(--acc);
+}
+.area-btn:hover{transform:translateY(-2px);background:var(--panel-2)}
+.area-btn.sel{background:var(--panel-2);box-shadow:0 0 0 2px var(--acc)}
+.area-btn .an{font-family:var(--disp);font-weight:600;font-size:16px}
+.area-btn .as{font-family:var(--mono);font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-top:3px}
+
+.locked{background:var(--panel);border:1px dashed var(--line);border-radius:12px;padding:22px;text-align:center;color:var(--cream-dim)}
+.locked .btn{margin-top:12px}
+
+.editor{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;margin-top:16px;border-top:4px solid var(--acc)}
+.editor .ehead{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.editor .ehead h3{font-size:18px}
+.form-row{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.form-row label{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:1.4px;color:var(--muted)}
+
+/* mini status grid (area) */
+.mini{margin-top:20px}
+.mini h3{font-size:14px;color:var(--cream-dim);margin-bottom:10px;font-family:var(--disp)}
+.mini-grid{display:grid;gap:6px}
+.mini-row{display:grid;grid-template-columns:64px repeat(6,1fr);gap:6px;align-items:center}
+.mini-row .wk{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.cell{
+  height:34px;border-radius:7px;border:1px solid var(--line);background:var(--panel-2);
+  display:grid;place-items:center;font-family:var(--mono);font-size:10px;color:var(--muted);cursor:pointer;transition:.12s;
+}
+.cell:hover{border-color:var(--cream)}
+.cell.filled{background:#20372A;border-color:#4FB05A55;color:var(--ok)}
+.cell.head{background:transparent;border:none;color:var(--muted);cursor:default;font-size:10px;text-transform:uppercase;letter-spacing:1px}
+
+/* ---------- Panel matrix ---------- */
+.stat-top{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:22px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 20px;flex:1;min-width:150px}
+.stat .num{font-family:var(--disp);font-size:32px;font-weight:700}
+.stat .lab{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-top:2px}
+
+.matrix{overflow-x:auto}
+.mx-row{display:grid;grid-template-columns:70px repeat(6,minmax(90px,1fr));gap:8px;margin-bottom:8px;align-items:center}
+.mx-h{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);text-align:center}
+.mx-wk{font-family:var(--mono);font-size:12px;color:var(--cream-dim);font-weight:600}
+.mx-cell{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:9px 8px;display:flex;gap:5px;justify-content:center}
+.pip{width:14px;height:14px;border-radius:4px;background:var(--pend);position:relative}
+.pip.on{background:var(--acc)}
+
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:18px}
+.legend span{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--cream-dim);font-family:var(--mono)}
+.legend i{width:12px;height:12px;border-radius:4px;display:inline-block}
+
+.config{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-top:26px}
+.config h3{font-size:15px;margin-bottom:14px}
+.config .crow{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-end}
+
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--cream);color:#14110E;font-weight:600;font-size:14px;padding:12px 22px;border-radius:10px;
+  opacity:0;transition:.25s;z-index:60;box-shadow:0 10px 40px #0008;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.help{font-size:12.5px;color:var(--muted);margin-top:8px;line-height:1.6}
+.note{background:#E8871E14;border:1px solid #E8871E44;border-radius:10px;padding:12px 15px;font-size:13px;color:var(--cream-dim);margin-bottom:20px}
+.note b{color:var(--seg)}
+
+@media print{
+  header,.tabs,.controls .btn,.agenda .tit{display:none}
+  body{background:#fff;color:#000}
+  .card{border-color:#ccc;break-inside:avoid}
+  .card .c-body,.card .meta,.card .c-area{color:#333}
+  main{padding:0}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="head-in">
+    <div class="brand">
+      <div class="mark">10′</div>
+      <div>
+        <h1>Junta de 10 Minutos</h1>
+        <div class="sub">Temas diarios · Cafiver · Río Blanco</div>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <span id="fbBadge" class="fb-badge off">Modo local</span>
+    <div class="tabs">
+      <button class="tab active" data-view="presentar">Presentar</button>
+      <button class="tab" data-view="cargar">Cargar tema</button>
+      <button class="tab" data-view="avisos">Avisos<span class="pill-count" id="avCount" style="display:none">0</span></button>
+      <button class="tab" data-view="panel">Estado</button>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- ============ PRESENTAR ============ -->
+  <section id="presentar" class="view active">
+    <div class="controls">
+      <div class="field">
+        <label>Semana</label>
+        <select id="pSemana"></select>
+      </div>
+      <div class="field">
+        <label>Día</label>
+        <select id="pDia"></select>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn ghost sm" onclick="window.print()">Imprimir / PDF</button>
+      <button class="btn sm" id="pHoy">Ir a hoy</button>
+    </div>
+
+    <div class="avisos-wrap" id="avisosBanner"></div>
+
+    <div class="agenda" id="agenda"></div>
+
+    <div class="present-head">
+      <div>
+        <div class="when" id="pWhen">—</div>
+        <h2 id="pTitle">Temas del día</h2>
+      </div>
+    </div>
+
+    <div class="cards" id="pCards"></div>
+  </section>
+
+  <!-- ============ CARGAR ============ -->
+  <section id="cargar" class="view">
+    <div class="note">Selecciona tu <b>área</b>, ingresa el PIN y captura el tema para la semana y el día que corresponda. El supervisor lo verá en la pestaña <b>Presentar</b>.</div>
+
+    <div class="area-grid" id="areaGrid"></div>
+
+    <div id="areaBody"></div>
+  </section>
+
+  <!-- ============ AVISOS ============ -->
+  <section id="avisos" class="view">
+    <div class="note">Los avisos aparecen <b>arriba de los temas del día</b> en la pestaña Presentar, sin importar la semana. Úsalos para comunicados urgentes, cambios de turno, resultados de auditoría o recordatorios de campaña.</div>
+
+    <div id="avEditorBox"></div>
+
+    <div class="av-list" id="avLista"></div>
+  </section>
+
+  <!-- ============ PANEL ============ -->
+  <section id="panel" class="view">
+    <div class="stat-top">
+      <div class="stat"><div class="num" id="stTotal">0</div><div class="lab">Slots totales</div></div>
+      <div class="stat"><div class="num" id="stListos" style="color:var(--ok)">0</div><div class="lab">Capturados</div></div>
+      <div class="stat"><div class="num" id="stPend" style="color:var(--seg)">0</div><div class="lab">Pendientes</div></div>
+      <div class="stat"><div class="num" id="stPct">0%</div><div class="lab">Avance</div></div>
+    </div>
+
+    <div class="controls" style="margin-bottom:18px">
+      <div class="spacer"></div>
+      <a class="folder-link" style="--acc:var(--seg)" href="https://drive.google.com/drive/folders/1XX5gqijQjLhbgfcAGS--njahEXg0AbXd" target="_blank" rel="noopener">📁 Carpeta maestra</a>
+      <button class="btn sm" id="btnExcel">Exportar a Excel</button>
+    </div>
+
+    <div class="matrix" id="matrix"></div>
+
+    <div class="legend" id="legend"></div>
+
+    <div class="config">
+      <h3>Configuración del ciclo</h3>
+      <div class="crow">
+        <div class="field">
+          <label>Semanas en el ciclo</label>
+          <select id="cfgSemanas">
+            <option value="3">3 semanas</option>
+            <option value="4" selected>4 semanas</option>
+            <option value="5">5 semanas</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Incluir Sábado</label>
+          <select id="cfgSabado">
+            <option value="si" selected>Sí (Lun–Sáb)</option>
+            <option value="no">No (Lun–Vie)</option>
+          </select>
+        </div>
+        <button class="btn sm" id="cfgSave">Aplicar</button>
+      </div>
+      <div class="help">Estos ajustes cambian el tamaño de la matriz para todos los usuarios (se guardan en la nube si Firebase está activo).</div>
+    </div>
+  </section>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ==================================================================
+   CONFIGURACIÓN
+   ================================================================== */
+
+// --- Firebase: pega aquí la config de tu proyecto upav-docente ---
+const firebaseConfig = {
+  apiKey:            "PEGA_AQUI_TU_API_KEY",
+  authDomain:        "upav-docente.firebaseapp.com",
+  projectId:         "upav-docente",
+  storageBucket:     "upav-docente.appspot.com",
+  messagingSenderId: "PEGA_AQUI",
+  appId:             "PEGA_AQUI"
+};
+const COLECCION = "junta10_temas";
+
+// --- PIN por área (cámbialos antes de compartir) ---
+const PINS = {
+  seguridad: "2601",
+  calidad:   "2602",
+  inocuidad: "2603",
+  ambiente:  "2604",
+  admin:     "0000"   // para cambiar configuración del ciclo
+};
+
+// --- Carpetas de Google Drive por área ---
+// Deja "" si aún no la tienes: el botón simplemente no aparece.
+const DRIVE_MAESTRA = "https://drive.google.com/drive/folders/1XX5gqijQjLhbgfcAGS--njahEXg0AbXd";
+const DRIVE_FOLDERS = {
+  seguridad: "https://drive.google.com/drive/folders/1HpLQFM1alSrtzCPQ_z-hfY5KN_KMt0BX",
+  calidad:   "https://drive.google.com/drive/folders/1h-cNYik_pid0ZMNrJMYfCNwoXsJcsg0n",
+  inocuidad: "https://drive.google.com/drive/folders/16Zk-_oUmVBrB4ciAUYhQceqjPRRSkHeG",
+  ambiente:  "https://drive.google.com/drive/folders/1V3PH3CT9QGJ_4U5R46xYkCPFxcjwGsjd"
+};
+
+const AREAS = [
+  { id:"seguridad", nombre:"Seguridad Industrial", short:"SEG", color:"#E8871E" },
+  { id:"calidad",   nombre:"Calidad",              short:"CAL", color:"#3B6BFF" },
+  { id:"inocuidad", nombre:"Inocuidad",            short:"INO", color:"#12B0AE" },
+  { id:"ambiente",  nombre:"Medio Ambiente",       short:"AMB", color:"#4FB05A" }
+];
+const DIAS_FULL = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
+const DIAS_ABBR = ["Lun","Mar","Mié","Jue","Vie","Sáb"];
+
+// Áreas de producción donde el supervisor divulga el aviso
+const AREAS_PROD = ["Envasado","Descafeinado","PSE","Mantenimiento","Almacén"];
+// Quién puede publicar avisos (además de las 4 áreas): PIN de admin
+const PIN_AVISOS = ["seguridad","calidad","inocuidad","ambiente","admin"];
+
+// Estructura de la junta de 10 minutos (editable)
+const AGENDA = [
+  { n:"1′", tit:"Apertura", lbl:"Bienvenida, asistencia y avisos del turno" },
+  { n:"6′", tit:"Temas del día", lbl:"Seguridad · Calidad · Inocuidad · Medio Ambiente" },
+  { n:"3′", tit:"Cierre", lbl:"Compromisos, dudas y arranque" }
+];
+
+/* ==================================================================
+   ESTADO
+   ================================================================== */
+let CFG = { semanas:4, sabado:true };
+let DATA = {};            // { "S1-0-seguridad": {tema, contenido, recurso, autor, ts} }
+let AVISOS = {};          // { "aviso_1753...": {titulo, mensaje, prioridad, vence, divulgado:{}} }
+let avisosDesbloqueado = false, avisosAutor = "";
+let db = null, useFB = false;
+let areaActiva = null, areaDesbloqueada = {};
+
+const areaById = id => AREAS.find(a=>a.id===id);
+const dias = () => CFG.sabado ? DIAS_FULL : DIAS_FULL.slice(0,5);
+const slotKey = (s,d,a) => `S${s}-${d}-${a}`;
+
+/* ==================================================================
+   FIREBASE / PERSISTENCIA
+   ================================================================== */
+function initFirebase(){
+  if(firebaseConfig.apiKey.startsWith("PEGA_AQUI")){
+    setBadge(false); loadLocal(); return;
+  }
+  try{
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    useFB = true; setBadge(true);
+    // config del ciclo
+    db.collection(COLECCION).doc("_config").onSnapshot(doc=>{
+      if(doc.exists){ CFG = Object.assign(CFG, doc.data()); syncCfgInputs(); rebuildAll(); }
+    });
+    // temas en tiempo real
+    db.collection(COLECCION).onSnapshot(snap=>{
+      DATA = {}; AVISOS = {};
+      snap.forEach(d=>{
+        if(d.id==="_config") return;
+        if(d.id.startsWith("aviso_")) AVISOS[d.id]=d.data();
+        else DATA[d.id]=d.data();
+      });
+      saveLocal(); rebuildAll();
+    });
+  }catch(e){
+    console.warn("Firebase no disponible, usando local:",e);
+    setBadge(false); loadLocal();
+  }
+}
+function setBadge(on){
+  const b=document.getElementById("fbBadge");
+  b.className="fb-badge "+(on?"on":"off");
+  b.textContent = on ? "Nube · en línea" : "Modo local";
+}
+function loadLocal(){
+  try{
+    DATA = JSON.parse(localStorage.getItem("junta10_data")||"{}");
+    AVISOS = JSON.parse(localStorage.getItem("junta10_avisos")||"{}");
+    const c = JSON.parse(localStorage.getItem("junta10_cfg")||"null");
+    if(c) CFG=c;
+  }catch(e){ DATA={}; AVISOS={}; }
+  syncCfgInputs(); rebuildAll();
+}
+function saveLocal(){
+  localStorage.setItem("junta10_data", JSON.stringify(DATA));
+  localStorage.setItem("junta10_avisos", JSON.stringify(AVISOS));
+  localStorage.setItem("junta10_cfg", JSON.stringify(CFG));
+}
+async function guardarSlot(key,obj){
+  DATA[key]=obj; saveLocal();
+  if(useFB){ try{ await db.collection(COLECCION).doc(key).set(obj); }catch(e){ toast("Guardado local (sin conexión)"); } }
+  rebuildAll();
+}
+async function guardarCfg(){
+  saveLocal();
+  if(useFB){ try{ await db.collection(COLECCION).doc("_config").set(CFG); }catch(e){} }
+  rebuildAll();
+}
+
+/* ==================================================================
+   NAVEGACIÓN
+   ================================================================== */
+document.querySelectorAll(".tab").forEach(t=>{
+  t.onclick=()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+    document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));
+    t.classList.add("active");
+    document.getElementById(t.dataset.view).classList.add("active");
+  };
+});
+
+/* ==================================================================
+   PRESENTAR
+   ================================================================== */
+function buildAgenda(){
+  document.getElementById("agenda").innerHTML =
+    `<span class="tit">Estructura 10′</span>` +
+    AGENDA.map(a=>`<div class="step"><span class="n">${a.n}</span><span class="lbl"><b style="color:var(--cream)">${a.tit}</b> — ${a.lbl}</span></div>`).join("");
+}
+/* --- Google Drive: extraer ID y decidir cómo mostrarlo --- */
+function driveId(url){
+  if(!url) return null;
+  let m = url.match(/\/file\/d\/([A-Za-z0-9_-]{20,})/);        // .../file/d/ID/view
+  if(m) return m[1];
+  m = url.match(/[?&]id=([A-Za-z0-9_-]{20,})/);               // ...open?id=ID
+  if(m) return m[1];
+  m = url.match(/\/document\/d\/([A-Za-z0-9_-]{20,})/) ||      // Docs
+      url.match(/\/presentation\/d\/([A-Za-z0-9_-]{20,})/) ||  // Slides
+      url.match(/\/spreadsheets\/d\/([A-Za-z0-9_-]{20,})/);    // Sheets
+  if(m) return m[1];
+  return null;
+}
+function esVideoExterno(url){
+  return /youtube\.com|youtu\.be|vimeo\.com/i.test(url||"");
+}
+function ytEmbed(url){
+  let m = url.match(/(?:youtu\.be\/|v=|\/embed\/)([A-Za-z0-9_-]{6,})/);
+  return m ? `https://www.youtube.com/embed/${m[1]}` : null;
+}
+// Genera el bloque de preview para una tarjeta
+function renderPreview(url, key){
+  if(!url) return "";
+  const abierto = PREVIEW_ABIERTO[key] !== false; // por defecto abierto
+  const bar = `<div class="pv-bar">
+      <button class="pv-btn" onclick="togglePreview('${key}')">${abierto?'Ocultar':'Ver'}</button>
+      <a class="pv-btn" href="${url}" target="_blank" rel="noopener" style="text-decoration:none">Abrir ↗</a>
+    </div>`;
+  if(!abierto) return `<div class="prev">${bar}<div class="pv-fail">Vista previa oculta</div></div>`;
+
+  const id = driveId(url);
+  if(id){
+    // Docs/Slides/Sheets y PDF grandes → visor embebido. Imágenes → thumbnail (más rápido).
+    const esDoc = /document\/d|presentation\/d|spreadsheets\/d/.test(url);
+    if(esDoc){
+      return `<div class="prev">${bar}<iframe src="https://drive.google.com/file/d/${id}/preview" allow="autoplay" loading="lazy"></iframe></div>`;
+    }
+    return `<div class="prev">${bar}
+      <img src="https://drive.google.com/thumbnail?id=${id}&sz=w1000" loading="lazy"
+           alt="Vista previa del recurso"
+           onerror="this.parentNode.innerHTML='${bar.replace(/'/g,"\\'")}<iframe src=&quot;https://drive.google.com/file/d/${id}/preview&quot; loading=&quot;lazy&quot;></iframe>'">
+    </div>`;
+  }
+  if(esVideoExterno(url)){
+    const emb = ytEmbed(url);
+    if(emb) return `<div class="prev">${bar}<iframe src="${emb}" allowfullscreen loading="lazy"></iframe></div>`;
+  }
+  if(/\.(png|jpe?g|gif|webp)$/i.test(url)){
+    return `<div class="prev">${bar}<img src="${url}" loading="lazy" alt="Vista previa del recurso"></div>`;
+  }
+  return "";
+}
+let PREVIEW_ABIERTO = {};
+function togglePreview(key){
+  PREVIEW_ABIERTO[key] = PREVIEW_ABIERTO[key]===false;
+  renderPresentar();
+}
+
+function renderPresentar(){
+  const s = +document.getElementById("pSemana").value || 1;
+  const d = +document.getElementById("pDia").value || 0;
+  const D = dias();
+  document.getElementById("pWhen").textContent = `Semana ${s} · ${D[d]||""}`;
+
+  const cont = document.getElementById("pCards");
+  cont.innerHTML = AREAS.map(a=>{
+    const rec = DATA[slotKey(s,d,a.id)];
+    if(rec && (rec.tema||rec.contenido)){
+      const fecha = rec.ts ? new Date(rec.ts).toLocaleDateString("es-MX",{day:"2-digit",month:"short"}) : "";
+      const link = rec.recurso ? `<a href="${rec.recurso}" target="_blank" rel="noopener">Ver recurso ↗</a>` : `<span></span>`;
+      const prev = renderPreview(rec.recurso, slotKey(s,d,a.id));
+      return `<div class="card" style="--acc:${a.color}">
+        <div class="c-head"><span class="dot"></span><span class="c-area">${a.nombre}</span></div>
+        <div class="c-tema">${esc(rec.tema)||"(sin título)"}</div>
+        <div class="c-body">${esc(rec.contenido)||""}</div>
+        ${prev}
+        <div class="c-foot">${link}<span class="meta">${rec.autor?esc(rec.autor)+" · ":""}${fecha}</span></div>
+      </div>`;
+    }
+    return `<div class="card empty" style="--acc:${a.color}">
+      <div class="c-head"><span class="dot"></span><span class="c-area">${a.nombre}</span></div>
+      <div class="c-tema" style="color:var(--muted)">Sin tema cargado</div>
+      <div class="c-body">El área aún no ha subido el tema para este día.</div>
+    </div>`;
+  }).join("");
+}
+function fillSemanaDia(prefix){
+  const semSel=document.getElementById(prefix+"Semana");
+  const diaSel=document.getElementById(prefix+"Dia");
+  const curSem=semSel.value, curDia=diaSel.value;
+  semSel.innerHTML=""; for(let i=1;i<=CFG.semanas;i++) semSel.innerHTML+=`<option value="${i}">Semana ${i}</option>`;
+  diaSel.innerHTML=""; dias().forEach((d,i)=>diaSel.innerHTML+=`<option value="${i}">${d}</option>`);
+  if(curSem && +curSem<=CFG.semanas) semSel.value=curSem;
+  if(curDia!=="" && +curDia<dias().length) diaSel.value=curDia;
+}
+document.getElementById("pSemana").onchange=renderPresentar;
+document.getElementById("pDia").onchange=renderPresentar;
+document.getElementById("pHoy").onclick=()=>{
+  const jsDay=new Date().getDay(); // 0=Dom..6=Sáb
+  let idx = jsDay===0 ? 0 : jsDay-1;  // Lun=0
+  if(idx>dias().length-1) idx=0;
+  document.getElementById("pDia").value=idx;
+  renderPresentar();
+  toast("Mostrando el día de hoy");
+};
+
+/* ==================================================================
+   CARGAR
+   ================================================================== */
+function renderAreaGrid(){
+  document.getElementById("areaGrid").innerHTML = AREAS.map(a=>`
+    <button class="area-btn ${areaActiva===a.id?'sel':''}" style="--acc:${a.color}" onclick="selArea('${a.id}')">
+      <div class="an">${a.nombre}</div><div class="as">${a.short}</div>
+    </button>`).join("");
+}
+function selArea(id){ areaActiva=id; renderAreaGrid(); renderAreaBody(); }
+
+function renderAreaBody(){
+  const box=document.getElementById("areaBody");
+  if(!areaActiva){ box.innerHTML=""; return; }
+  const a=areaById(areaActiva);
+  if(!areaDesbloqueada[areaActiva]){
+    box.innerHTML=`<div class="locked" style="border-color:${a.color}55">
+      <div>Ingresa el PIN de <b style="color:${a.color}">${a.nombre}</b> para capturar temas.</div>
+      <div style="margin-top:12px;display:flex;gap:10px;justify-content:center">
+        <input type="password" id="pinInput" placeholder="PIN" style="max-width:130px;text-align:center;letter-spacing:3px">
+        <button class="btn sm" onclick="checkPin()">Entrar</button>
+      </div>
+    </div>`;
+    setTimeout(()=>{const i=document.getElementById("pinInput");if(i){i.focus();i.onkeydown=e=>{if(e.key==='Enter')checkPin();};}},50);
+    return;
+  }
+  box.innerHTML=`
+    <div class="editor" style="--acc:${a.color}">
+      <div class="ehead"><span class="dot" style="background:${a.color}"></span><h3>${a.nombre}</h3></div>
+      <div class="controls" style="margin-bottom:6px">
+        <div class="field"><label>Semana</label><select id="eSemana"></select></div>
+        <div class="field"><label>Día</label><select id="eDia"></select></div>
+      </div>
+      <div class="form-row"><label>Tema del día</label>
+        <input type="text" id="eTema" placeholder="Ej. Uso correcto de EPP en línea Aglomerado"></div>
+      <div class="form-row"><label>Mensaje / contenido para el personal</label>
+        <textarea id="eBody" rows="6" placeholder="Puntos clave que el supervisor debe transmitir..."></textarea></div>
+      <div class="form-row"><label>Recurso (opcional · link de Google Drive, YouTube o imagen)</label>
+        <input type="text" id="eRec" placeholder="https://drive.google.com/file/d/..." oninput="previewEnEditor()">
+        <div class="drive-hint" style="--acc:${a.color}">
+          Sube el archivo a la carpeta del área, dale <b>Compartir → Cualquiera con el enlace → Lector</b>, copia el link y pégalo aquí.
+          El supervisor lo verá dentro de la tarjeta, sin abrir otra pestaña.
+        </div>
+        <div id="eRecStatus" class="drive-hint" style="--acc:${a.color}"></div>
+      </div>
+      ${DRIVE_FOLDERS[areaActiva] ? `<div style="margin-bottom:16px">
+        <a class="folder-link" style="--acc:${a.color}" href="${DRIVE_FOLDERS[areaActiva]}" target="_blank" rel="noopener">📁 Abrir carpeta de ${a.nombre} en Drive</a>
+      </div>` : `<div style="margin-bottom:16px">
+        <a class="folder-link" style="--acc:${a.color}" href="${DRIVE_MAESTRA}" target="_blank" rel="noopener">📁 Abrir Junta 10 Minutos 2026 en Drive</a>
+        <div class="drive-hint" style="--acc:${a.color};margin-top:6px">Entra a la subcarpeta <b>${a.nombre.toUpperCase()}</b>.</div>
+      </div>`}
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn" onclick="guardarTema()">Guardar tema</button>
+        <button class="btn ghost sm" onclick="limpiarTema()">Limpiar</button>
+      </div>
+      <div class="mini" id="miniStatus"></div>
+    </div>`;
+  fillSemanaDia("e");
+  document.getElementById("eSemana").onchange=cargarSlotEnEditor;
+  document.getElementById("eDia").onchange=cargarSlotEnEditor;
+  cargarSlotEnEditor();
+  renderMini();
+}
+function checkPin(){
+  const v=document.getElementById("pinInput").value.trim();
+  if(v===PINS[areaActiva]){ areaDesbloqueada[areaActiva]=true; renderAreaBody(); toast("Acceso concedido"); }
+  else toast("PIN incorrecto");
+}
+function cargarSlotEnEditor(){
+  const s=+document.getElementById("eSemana").value, d=+document.getElementById("eDia").value;
+  const rec=DATA[slotKey(s,d,areaActiva)]||{};
+  document.getElementById("eTema").value=rec.tema||"";
+  document.getElementById("eBody").value=rec.contenido||"";
+  document.getElementById("eRec").value=rec.recurso||"";
+  previewEnEditor();
+}
+function previewEnEditor(){
+  const el=document.getElementById("eRecStatus"); if(!el) return;
+  const url=document.getElementById("eRec").value.trim();
+  if(!url){ el.textContent=""; return; }
+  if(driveId(url)) el.innerHTML='<b>✓ Link de Drive detectado</b> — se mostrará embebido en la tarjeta.';
+  else if(esVideoExterno(url)) el.innerHTML='<b>✓ Video detectado</b> — se mostrará embebido.';
+  else if(/\.(png|jpe?g|gif|webp)$/i.test(url)) el.innerHTML='<b>✓ Imagen detectada</b> — se mostrará embebida.';
+  else if(/^https?:\/\//i.test(url)) el.textContent='Link válido. Se mostrará como botón "Ver recurso", sin vista previa.';
+  else el.textContent='Falta el https:// al inicio del link.';
+}
+function limpiarTema(){
+  document.getElementById("eTema").value="";
+  document.getElementById("eBody").value="";
+  document.getElementById("eRec").value="";
+  previewEnEditor();
+}
+async function guardarTema(){
+  const s=+document.getElementById("eSemana").value, d=+document.getElementById("eDia").value;
+  const tema=document.getElementById("eTema").value.trim();
+  const contenido=document.getElementById("eBody").value.trim();
+  if(!tema && !contenido){ toast("Escribe al menos el tema"); return; }
+  await guardarSlot(slotKey(s,d,areaActiva),{
+    tema, contenido, recurso:document.getElementById("eRec").value.trim(),
+    area:areaActiva, semana:s, dia:d, autor:areaById(areaActiva).nombre, ts:Date.now()
+  });
+  toast("Tema guardado ✓"); renderMini();
+}
+function renderMini(){
+  const box=document.getElementById("miniStatus"); if(!box) return;
+  const D=dias();
+  let html=`<h3>Estatus de ${areaById(areaActiva).nombre}</h3><div class="mini-grid">`;
+  html+=`<div class="mini-row"><span class="wk"></span>`+D.map(d=>`<div class="cell head">${d.slice(0,3)}</div>`).join("")+`</div>`;
+  for(let s=1;s<=CFG.semanas;s++){
+    html+=`<div class="mini-row"><span class="wk">Sem ${s}</span>`;
+    D.forEach((d,i)=>{
+      const rec=DATA[slotKey(s,i,areaActiva)];
+      const filled=rec&&(rec.tema||rec.contenido);
+      html+=`<div class="cell ${filled?'filled':''}" onclick="jumpEditor(${s},${i})">${filled?'✓':''}</div>`;
+    });
+    html+=`</div>`;
+  }
+  box.innerHTML=html+`</div>`;
+}
+function jumpEditor(s,d){
+  document.getElementById("eSemana").value=s;
+  document.getElementById("eDia").value=d;
+  cargarSlotEnEditor();
+  document.getElementById("eTema").focus();
+}
+
+/* ==================================================================
+   PANEL / ESTADO
+   ================================================================== */
+/* ==================================================================
+   AVISOS
+   ================================================================== */
+function avisoVigente(av){
+  if(!av.vence) return true;
+  const hoy=new Date(); hoy.setHours(0,0,0,0);
+  return new Date(av.vence+"T23:59:59") >= hoy;
+}
+function avisosVigentes(){
+  return Object.entries(AVISOS)
+    .filter(([k,v])=>avisoVigente(v))
+    .sort((a,b)=>{
+      const p=(x)=>x.prioridad==="urgente"?0:1;
+      return p(a[1])-p(b[1]) || (b[1].ts||0)-(a[1].ts||0);
+    });
+}
+async function guardarAviso(obj,id){
+  const key = id || ("aviso_"+Date.now());
+  AVISOS[key]=obj; saveLocal();
+  if(useFB){ try{ await db.collection(COLECCION).doc(key).set(obj); }catch(e){ toast("Guardado local (sin conexión)"); } }
+  rebuildAll();
+  return key;
+}
+async function borrarAviso(key){
+  if(!confirm("¿Eliminar este aviso? No se puede deshacer.")) return;
+  delete AVISOS[key]; saveLocal();
+  if(useFB){ try{ await db.collection(COLECCION).doc(key).delete(); }catch(e){} }
+  rebuildAll(); toast("Aviso eliminado");
+}
+async function marcarDivulgado(key,area){
+  const av=AVISOS[key]; if(!av) return;
+  av.divulgado = av.divulgado || {};
+  if(av.divulgado[area]) return;              // ya registrado, no se revierte
+  av.divulgado[area] = { ts:Date.now() };
+  await guardarAviso(av,key);
+  toast(`Divulgado en ${area} ✓`);
+}
+
+/* --- Banner en Presentar --- */
+function renderAvisosBanner(){
+  const box=document.getElementById("avisosBanner"); if(!box) return;
+  const list=avisosVigentes();
+  const badge=document.getElementById("avCount");
+  if(badge){
+    if(list.length){ badge.style.display="inline-block"; badge.textContent=list.length; }
+    else badge.style.display="none";
+  }
+  if(!list.length){ box.innerHTML=""; return; }
+  box.innerHTML=list.map(([k,av])=>{
+    const urg=av.prioridad==="urgente";
+    const acc=urg?"#E8871E":"#3B6BFF";
+    const chips=AREAS_PROD.map(a=>{
+      const d=(av.divulgado||{})[a];
+      if(d){
+        const f=new Date(d.ts).toLocaleDateString("es-MX",{day:"2-digit",month:"2-digit"});
+        return `<span class="chip done">✓ ${a} · ${f}</span>`;
+      }
+      return `<button class="chip" onclick="marcarDivulgado('${k}','${a}')">${a}</button>`;
+    }).join("");
+    const vence = av.vence ? ` · vence ${new Date(av.vence+"T12:00").toLocaleDateString("es-MX",{day:"2-digit",month:"short"})}` : " · sin vencimiento";
+    return `<div class="aviso ${urg?'urg':''}" style="--acc:${acc}">
+      <div class="av-top">
+        <span class="av-tag" style="background:${acc}">${urg?'Urgente':'Aviso'}</span>
+        <span class="av-tit">${esc(av.titulo)}</span>
+      </div>
+      <div class="av-msg">${esc(av.mensaje)}</div>
+      <div class="av-meta">${esc(av.autor||"")}${vence}</div>
+      <div class="av-foot">
+        <span class="av-meta" style="flex:none">Divulgado en:</span>
+        <div class="av-chips">${chips}</div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+/* --- Vista Avisos: publicar y administrar --- */
+function renderAvisosView(){
+  const box=document.getElementById("avEditorBox"); if(!box) return;
+  if(!avisosDesbloqueado){
+    box.innerHTML=`<div class="locked">
+      <div>Ingresa el PIN de tu área o el de administrador para publicar un aviso.</div>
+      <div style="margin-top:12px;display:flex;gap:10px;justify-content:center">
+        <input type="password" id="avPin" placeholder="PIN" style="max-width:130px;text-align:center;letter-spacing:3px">
+        <button class="btn sm" onclick="checkPinAviso()">Entrar</button>
+      </div>
+    </div>`;
+    setTimeout(()=>{const i=document.getElementById("avPin");if(i){i.onkeydown=e=>{if(e.key==='Enter')checkPinAviso();};}},50);
+  }else{
+    // Si el editor ya está en pantalla, no lo reconstruyas: borraría lo que se está escribiendo.
+    if(document.getElementById("avTit")){ renderAvisosLista(); return; }
+    box.innerHTML=`<div class="editor" style="--acc:#E8871E">
+      <div class="ehead"><span class="dot" style="background:#E8871E"></span><h3>Publicar aviso · ${esc(avisosAutor)}</h3></div>
+      <div class="form-row"><label>Título</label>
+        <input type="text" id="avTit" placeholder="Ej. Cambio de horario de comida en Envasado"></div>
+      <div class="form-row"><label>Mensaje</label>
+        <textarea id="avMsg" rows="4" placeholder="Lo que el supervisor debe comunicar al personal..."></textarea></div>
+      <div class="controls" style="margin-bottom:14px">
+        <div class="field"><label>Prioridad</label>
+          <select id="avPri"><option value="normal">Aviso normal</option><option value="urgente">Urgente</option></select></div>
+        <div class="field"><label>Vigente hasta (opcional)</label>
+          <input type="date" id="avVence" style="background:var(--panel);border:1px solid var(--line);color:var(--cream);border-radius:9px;padding:10px 12px"></div>
+      </div>
+      <button class="btn" onclick="publicarAviso()">Publicar aviso</button>
+      <div class="help">Al publicarlo aparece de inmediato en Presentar para todos los supervisores.</div>
+    </div>`;
+  }
+  renderAvisosLista();
+}
+function checkPinAviso(){
+  const v=document.getElementById("avPin").value.trim();
+  const match=PIN_AVISOS.find(k=>PINS[k]===v);
+  if(match){
+    avisosDesbloqueado=true;
+    avisosAutor = match==="admin" ? "Producción / Dirección" : areaById(match).nombre;
+    renderAvisosView(); toast("Acceso concedido");
+  } else toast("PIN incorrecto");
+}
+async function publicarAviso(){
+  const titulo=document.getElementById("avTit").value.trim();
+  const mensaje=document.getElementById("avMsg").value.trim();
+  if(!titulo){ toast("Escribe el título del aviso"); return; }
+  await guardarAviso({
+    titulo, mensaje,
+    prioridad:document.getElementById("avPri").value,
+    vence:document.getElementById("avVence").value||"",
+    autor:avisosAutor, ts:Date.now(), divulgado:{}
+  });
+  document.getElementById("avTit").value="";
+  document.getElementById("avMsg").value="";
+  document.getElementById("avVence").value="";
+  toast("Aviso publicado ✓");
+}
+function renderAvisosLista(){
+  const box=document.getElementById("avLista"); if(!box) return;
+  const todos=Object.entries(AVISOS).sort((a,b)=>(b[1].ts||0)-(a[1].ts||0));
+  if(!todos.length){ box.innerHTML=`<div class="av-empty">No hay avisos publicados. El primero que publiques aparecerá aquí y en Presentar.</div>`; return; }
+  box.innerHTML=todos.map(([k,av])=>{
+    const vig=avisoVigente(av), urg=av.prioridad==="urgente";
+    const acc=urg?"#E8871E":"#3B6BFF";
+    const n=Object.keys(av.divulgado||{}).length;
+    const f=av.ts?new Date(av.ts).toLocaleDateString("es-MX",{day:"2-digit",month:"short",year:"numeric"}):"";
+    return `<div class="aviso ${vig?'':'av-vencido'}" style="--acc:${acc}">
+      <div class="av-top">
+        <span class="av-tag" style="background:${vig?acc:'#4A4038'};color:${vig?'#14110E':'#8C8177'}">${vig?(urg?'Urgente':'Aviso'):'Vencido'}</span>
+        <span class="av-tit">${esc(av.titulo)}</span>
+        <div class="av-admin">${avisosDesbloqueado?`<button class="av-del" onclick="borrarAviso('${k}')">Eliminar</button>`:''}</div>
+      </div>
+      <div class="av-msg">${esc(av.mensaje)}</div>
+      <div class="av-meta">${esc(av.autor||"")} · ${f} · divulgado en ${n} de ${AREAS_PROD.length} áreas</div>
+    </div>`;
+  }).join("");
+}
+
+function renderPanel(){
+  const D=dias(), total=CFG.semanas*D.length*AREAS.length;
+  let listos=0;
+  for(const k in DATA){ if(k==="_config")continue; const r=DATA[k]; if(r.tema||r.contenido) listos++; }
+  document.getElementById("stTotal").textContent=total;
+  document.getElementById("stListos").textContent=listos;
+  document.getElementById("stPend").textContent=total-listos;
+  document.getElementById("stPct").textContent=total?Math.round(listos/total*100)+"%":"0%";
+
+  let html=`<div class="mx-row"><span class="mx-h"></span>`+D.map(d=>`<span class="mx-h">${d}</span>`).join("")+`</div>`;
+  for(let s=1;s<=CFG.semanas;s++){
+    html+=`<div class="mx-row"><span class="mx-wk">Sem ${s}</span>`;
+    D.forEach((d,i)=>{
+      const pips=AREAS.map(a=>{
+        const r=DATA[slotKey(s,i,a.id)];
+        const on=r&&(r.tema||r.contenido);
+        return `<span class="pip ${on?'on':''}" style="--acc:${a.color}" title="${a.nombre}"></span>`;
+      }).join("");
+      html+=`<div class="mx-cell">${pips}</div>`;
+    });
+    html+=`</div>`;
+  }
+  document.getElementById("matrix").innerHTML=html;
+  document.getElementById("legend").innerHTML=AREAS.map(a=>`<span><i style="background:${a.color}"></i>${a.nombre}</span>`).join("")+`<span><i style="background:var(--pend)"></i>Pendiente</span>`;
+}
+/* --- Exportar a Excel (2 hojas: Temas + Avance) --- */
+document.getElementById("btnExcel").onclick=()=>{
+  const D=dias();
+  const filas=[];
+  for(let s=1;s<=CFG.semanas;s++){
+    D.forEach((dn,di)=>{
+      AREAS.forEach(a=>{
+        const r=DATA[slotKey(s,di,a.id)]||{};
+        filas.push({
+          "Semana":s, "Día":dn, "Área":a.nombre,
+          "Tema":r.tema||"", "Contenido":r.contenido||"", "Recurso":r.recurso||"",
+          "Estatus":(r.tema||r.contenido)?"Capturado":"Pendiente",
+          "Actualizado": r.ts ? new Date(r.ts).toLocaleString("es-MX") : ""
+        });
+      });
+    });
+  }
+  const avance=[];
+  for(let s=1;s<=CFG.semanas;s++){
+    const row={"Semana":"Semana "+s};
+    D.forEach((dn,di)=>{
+      const n=AREAS.filter(a=>{const r=DATA[slotKey(s,di,a.id)];return r&&(r.tema||r.contenido);}).length;
+      row[dn]=`${n}/${AREAS.length}`;
+    });
+    avance.push(row);
+  }
+  const avRows=Object.entries(AVISOS).sort((a,b)=>(b[1].ts||0)-(a[1].ts||0)).map(([k,av])=>{
+    const row={
+      "Aviso":av.titulo||"", "Mensaje":av.mensaje||"",
+      "Prioridad":av.prioridad==="urgente"?"Urgente":"Normal",
+      "Publicó":av.autor||"",
+      "Publicado":av.ts?new Date(av.ts).toLocaleDateString("es-MX"):"",
+      "Vigente hasta":av.vence||"Sin vencimiento"
+    };
+    AREAS_PROD.forEach(a=>{
+      const d=(av.divulgado||{})[a];
+      row[a]= d ? new Date(d.ts).toLocaleDateString("es-MX") : "Pendiente";
+    });
+    return row;
+  });
+  try{
+    const wb=XLSX.utils.book_new();
+    const ws1=XLSX.utils.json_to_sheet(filas);
+    ws1["!cols"]=[{wch:8},{wch:11},{wch:22},{wch:42},{wch:65},{wch:38},{wch:12},{wch:18}];
+    XLSX.utils.book_append_sheet(wb,ws1,"Temas");
+    const ws2=XLSX.utils.json_to_sheet(avance);
+    ws2["!cols"]=[{wch:12},...D.map(()=>({wch:11}))];
+    XLSX.utils.book_append_sheet(wb,ws2,"Avance");
+    if(avRows.length){
+      const ws3=XLSX.utils.json_to_sheet(avRows);
+      ws3["!cols"]=[{wch:38},{wch:60},{wch:11},{wch:22},{wch:13},{wch:15},...AREAS_PROD.map(()=>({wch:14}))];
+      XLSX.utils.book_append_sheet(wb,ws3,"Avisos");
+    }
+    const f=new Date().toISOString().slice(0,10);
+    XLSX.writeFile(wb,`Junta10_Temas_${f}.xlsx`);
+    toast("Excel generado ✓");
+  }catch(e){
+    // Respaldo CSV si SheetJS no cargó
+    const heads=Object.keys(filas[0]);
+    const csv="\uFEFF"+[heads.join(",")].concat(
+      filas.map(r=>heads.map(h=>`"${String(r[h]).replace(/"/g,'""')}"`).join(","))
+    ).join("\n");
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8;"}));
+    a.download="Junta10_Temas.csv"; a.click();
+    toast("Descargado como CSV");
+  }
+};
+
+document.getElementById("cfgSave").onclick=()=>{
+  const pin=prompt("PIN de administrador para cambiar la configuración:");
+  if(pin!==PINS.admin){ toast("PIN incorrecto"); return; }
+  CFG.semanas=+document.getElementById("cfgSemanas").value;
+  CFG.sabado=document.getElementById("cfgSabado").value==="si";
+  guardarCfg(); toast("Configuración aplicada");
+};
+function syncCfgInputs(){
+  document.getElementById("cfgSemanas").value=CFG.semanas;
+  document.getElementById("cfgSabado").value=CFG.sabado?"si":"no";
+}
+
+/* ==================================================================
+   UTILIDADES
+   ================================================================== */
+function esc(s){return (s||"").replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+let toastT;
+function toast(msg){
+  const t=document.getElementById("toast"); t.textContent=msg; t.classList.add("show");
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),2200);
+}
+function rebuildAll(){
+  fillSemanaDia("p");
+  buildAgenda();
+  renderPresentar();
+  renderAvisosBanner();
+  renderAvisosView();
+  renderAreaGrid();
+  if(areaActiva) renderAreaBody();
+  renderPanel();
+}
+
+/* ==================================================================
+   ARRANQUE
+   ================================================================== */
+initFirebase();
+rebuildAll();
+// posicionar en el día de hoy al abrir
+document.getElementById("pHoy").click();
+</script>
+</body>
+</html>
