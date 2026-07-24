@@ -190,12 +190,30 @@ textarea{width:100%;resize:vertical;line-height:1.55}
 
 .agenda{
   background:var(--panel-2);border:1px solid var(--line);border-radius:12px;
-  padding:14px 18px;margin-bottom:20px;display:flex;gap:22px;flex-wrap:wrap;align-items:center;
+  padding:16px 18px;margin-bottom:20px;
 }
-.agenda .step{display:flex;align-items:center;gap:9px}
-.agenda .n{font-family:var(--mono);font-weight:600;font-size:12px;color:#14110E;background:var(--cream);border-radius:6px;padding:3px 8px}
-.agenda .lbl{font-size:13.5px;color:var(--cream-dim)}
-.agenda .tit{font-family:var(--mono);font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-right:4px}
+.ag-title{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted);
+  display:flex;align-items:center;gap:10px;margin-bottom:12px;
+}
+.ag-model{
+  font-family:var(--mono);font-weight:600;font-size:11px;letter-spacing:2px;
+  color:var(--seg);border:1px solid #E8871E44;border-radius:5px;padding:2px 8px;background:#E8871E14;
+}
+.ag-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media(max-width:900px){.ag-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.ag-grid{grid-template-columns:1fr}}
+.agenda .step{
+  display:flex;gap:10px;align-items:flex-start;
+  background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:11px 12px;
+  border-top:3px solid var(--acc);
+}
+.agenda .n{
+  font-family:var(--mono);font-weight:700;font-size:12px;color:#14110E;background:var(--acc);
+  border-radius:6px;padding:3px 8px;flex:none;line-height:1.3;
+}
+.agenda .tit{font-family:var(--disp);font-weight:600;font-size:14px;display:block;margin-bottom:2px;letter-spacing:-.1px}
+.agenda .lbl{font-size:12px;color:var(--cream-dim);line-height:1.45}
 
 /* ---------- Area picker ---------- */
 .area-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:6px}
@@ -442,11 +460,12 @@ const AREAS_PROD = ["Envasado","Descafeinado","PSE","Mantenimiento","Almacén"];
 // Quién puede publicar avisos (además de las 4 áreas): PIN de admin
 const PIN_AVISOS = ["seguridad","calidad","inocuidad","ambiente","admin"];
 
-// Estructura de la junta de 10 minutos (editable)
+// Estructura de la junta de 10 minutos · modelo 1-4-4-1 (editable)
 const AGENDA = [
-  { n:"1′", tit:"Apertura", lbl:"Bienvenida, asistencia y avisos del turno" },
-  { n:"6′", tit:"Temas del día", lbl:"Seguridad · Calidad · Inocuidad · Medio Ambiente" },
-  { n:"3′", tit:"Cierre", lbl:"Compromisos, dudas y arranque" }
+  { n:"1′", tit:"Apertura", lbl:"Asistencia, avisos del turno y arranque" },
+  { n:"4′", tit:"Temas del día", lbl:"Seguridad · Calidad · Inocuidad · Medio Ambiente" },
+  { n:"4′", tit:"Desempeño y plan", lbl:"Resultados del turno anterior, metas y prioridades del día" },
+  { n:"1′", tit:"Cierre", lbl:"Compromisos, dudas y liberación a línea" }
 ];
 
 /* ==================================================================
@@ -539,9 +558,20 @@ document.querySelectorAll(".tab").forEach(t=>{
    PRESENTAR
    ================================================================== */
 function buildAgenda(){
+  const cols=["#8C8177","#E8871E","#3B6BFF","#8C8177"];
+  const modelo=AGENDA.map(a=>parseInt(a.n)).join("-");
+  const total=AGENDA.reduce((s,a)=>s+parseInt(a.n),0);
   document.getElementById("agenda").innerHTML =
-    `<span class="tit">Estructura 10′</span>` +
-    AGENDA.map(a=>`<div class="step"><span class="n">${a.n}</span><span class="lbl"><b style="color:var(--cream)">${a.tit}</b> — ${a.lbl}</span></div>`).join("");
+    `<div class="ag-title">Estructura de la junta
+       <span class="ag-model">${modelo}</span>
+       <span>${total} minutos</span>
+     </div>
+     <div class="ag-grid">` +
+    AGENDA.map((a,i)=>`<div class="step" style="--acc:${cols[i]||'#8C8177'}">
+        <span class="n">${a.n}</span>
+        <span><b class="tit">${a.tit}</b><span class="lbl">${a.lbl}</span></span>
+      </div>`).join("") +
+    `</div>`;
 }
 /* --- Google Drive: extraer ID y decidir cómo mostrarlo --- */
 function driveId(url){
