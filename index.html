@@ -462,7 +462,7 @@ let plantaActiva = localStorage.getItem("rij_planta") || PLANTAS[0].id;
    ESTADO
    ================================================================== */
 let DATA={}, AVISOS={}, db=null, useFB=false;
-let areaActiva=null, usuarioActivo=null, semanaEditor=1;
+let areaActiva=null, usuarioActivo=null, semanaEditor=1, alcanceEditor='una';
 let avisosDesbloqueado=false, avisosAutor="";
 let PREVIEW_ABIERTO={};
 
@@ -472,6 +472,7 @@ const plantaObj = id => PLANTAS.find(p=>p.id===id) || PLANTAS[0];
 const slotKeyP = (pid,d,s) => `PL${pid}-D${d}-S${s}`;
 const slotKey = (d,s) => slotKeyP(plantaActiva,d,s);
 function esAreaComun(area){ return AREAS_COMUNES.includes(area); }
+function comunEsteTema(){ return areaActiva && esAreaComun(areaActiva); }
 function usuariosDe(area){ return USUARIOS.filter(u=>u.area===area && (u.planta===""||u.planta===plantaActiva)); }
 function buscarUsuario(pin,area){ return usuariosDe(area).find(u=>u.pin===pin); }
 
@@ -694,7 +695,7 @@ function renderAreaGrid(){
       <div class="as">Día ${t.dia} · ${t.responsable}</div>
     </button>`).join("");
 }
-function selArea(a){ areaActiva=a; usuarioActivo=null; semanaEditor=1; renderAreaGrid(); renderAreaBody(); }
+function selArea(a){ areaActiva=a; usuarioActivo=null; semanaEditor=1; alcanceEditor='una'; renderAreaGrid(); renderAreaBody(); }
 
 function renderAreaBody(){
   const box=document.getElementById("areaBody");
@@ -718,17 +719,17 @@ function renderAreaBody(){
   const comun=esAreaComun(areaActiva);
   const alcanceBox = comun ? `
     <div class="form-row"><label>Aplicar este contenido a</label>
-      <select id="eAlcance">
-        <option value="una">Solo Planta ${plantaObj(plantaActiva).nombre}</option>
-        <option value="todas">Todas las plantas (${PLANTAS.length}) — publicación masiva</option>
-      </select>
+      <div class="wk-tabs">
+        <button type="button" class="wk-tab ${alcanceEditor==='una'?'on':''}" style="--acc:${t.color}" onclick="setAlcance('una')">Solo Planta ${plantaObj(plantaActiva).nombre}</button>
+        <button type="button" class="wk-tab ${alcanceEditor==='todas'?'on':''}" style="--acc:#E8871E" onclick="setAlcance('todas')">📡 Masivo · ${PLANTAS.length} plantas</button>
+      </div>
       <div class="drive-hint" style="--acc:${t.color}">${t.nombre} es un área común: puedes subir una vez y que se refleje en las 7 plantas, o afinarlo planta por planta cambiando el selector superior.</div>
     </div>` : ``;
   box.innerHTML=`<div class="editor" style="--acc:${t.color}">
     <div class="ehead"><span class="dh-ico">${t.icono}</span><h3>${t.nombre}</h3>
       <span class="meta">Planta ${plantaObj(plantaActiva).nombre} · ${esc(usuarioActivo.nombre)}</span></div>
     <div class="help" style="margin-bottom:14px">${t.objetivo}</div>
-    <div class="wk-tabs">${wk}</div>
+    <div class="wk-tabs" id="wkTabsBox">${wk}</div>
     <div class="guia" style="--acc:${t.color}" id="guiaBox"></div>
     ${alcanceBox}
     <div class="form-row"><label>Contenido para el supervisor</label>
@@ -747,8 +748,9 @@ function renderAreaBody(){
   </div>`;
   cargarEnEditor();
 }
-function cerrarSesionArea(){ usuarioActivo=null; renderAreaBody(); }
-function setSemanaEditor(s){ semanaEditor=s; document.querySelectorAll(".wk-tab").forEach((b,i)=>b.classList.toggle("on",i===s-1)); cargarEnEditor(); }
+function cerrarSesionArea(){ usuarioActivo=null; alcanceEditor='una'; renderAreaBody(); }
+function setSemanaEditor(s){ semanaEditor=s; document.querySelectorAll("#wkTabsBox .wk-tab").forEach((b,i)=>b.classList.toggle("on",i===s-1)); cargarEnEditor(); }
+function setAlcance(v){ alcanceEditor=v; renderAreaBody(); }
 function checkPin(){
   const v=document.getElementById("pinInput").value.trim();
   const u=buscarUsuario(v,areaActiva);
@@ -790,8 +792,7 @@ async function guardarContenido(){
     recurso:document.getElementById("eRec").value.trim(),
     autor:usuarioActivo.nombre, ts:Date.now()
   };
-  const alcanceSel=document.getElementById("eAlcance");
-  if(alcanceSel && alcanceSel.value==="todas"){
+  if(comunEsteTema() && alcanceEditor==="todas"){
     if(!confirm(`Vas a publicar en las ${PLANTAS.length} plantas a la vez. ¿Confirmas?`)) return;
     await guardarSlotMasivo(t.dia,semanaEditor,objBase);
     toast(`Semana ${semanaEditor} publicada en ${PLANTAS.length} plantas ✓`);
@@ -799,7 +800,7 @@ async function guardarContenido(){
     await guardarSlot(slotKey(t.dia,semanaEditor),Object.assign({},objBase,{planta:plantaActiva}));
     toast(`Semana ${semanaEditor} guardada en Planta ${plantaObj(plantaActiva).nombre} ✓`);
   }
-  document.querySelectorAll(".wk-tab")[semanaEditor-1].innerHTML=`Semana ${semanaEditor}<span class="dotok"></span>`;
+  document.querySelectorAll("#wkTabsBox .wk-tab")[semanaEditor-1].innerHTML=`Semana ${semanaEditor}<span class="dotok"></span>`;
 }
 
 /* ==================================================================
