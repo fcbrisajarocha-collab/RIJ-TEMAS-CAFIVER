@@ -44,6 +44,17 @@ header{position:sticky;top:0;z-index:30;background:linear-gradient(180deg,#14110
 .tab.active{background:var(--cream);color:#14110E}
 .pill-count{font-family:var(--mono);font-size:9.5px;background:#E8871E;color:#14110E;font-weight:700;border-radius:99px;padding:2px 7px;margin-left:6px}
 
+.planta-bar{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.p-btn{
+  font-family:var(--body);font-weight:600;font-size:12.5px;color:var(--cream-dim);
+  background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:8px 12px;
+  display:flex;align-items:center;gap:6px;transition:.15s;white-space:nowrap;
+}
+.p-btn:hover{border-color:var(--cream);color:var(--cream)}
+.p-btn.on{background:var(--cream);color:#14110E;border-color:var(--cream)}
+.p-btn.masivo{border-color:#E8871E66;color:#E8871E}
+.p-btn.masivo.on{background:#E8871E;color:#14110E;border-color:#E8871E}
+
 main{max-width:1240px;margin:0 auto;padding:24px 20px 80px}
 .view{display:none;animation:fade .25s ease}
 .view.active{display:block}
@@ -208,9 +219,7 @@ textarea{width:100%;resize:vertical;line-height:1.55}
     </div>
     <div class="spacer"></div>
     <span id="fbBadge" class="fb-badge off">Modo local</span>
-    <div class="field" style="gap:0">
-      <select id="plantaSel" style="min-width:170px;font-weight:600"></select>
-    </div>
+    <div class="planta-bar" id="plantaBar"></div>
     <div class="tabs">
       <button class="tab active" data-view="presentar">Presentar</button>
       <button class="tab" data-view="plan">Plan RIJ</button>
@@ -572,15 +581,18 @@ function renderPreview(url,key){
 }
 function togglePreview(key){ PREVIEW_ABIERTO[key]=PREVIEW_ABIERTO[key]===false; renderPresentar(); }
 
-function fillPlantaSel(){
-  const s=document.getElementById("plantaSel");
-  s.innerHTML=PLANTAS.map(p=>`<option value="${p.id}">🏭 Planta ${p.nombre}</option>`).join("");
-  s.value=plantaActiva;
-  s.onchange=()=>{
-    plantaActiva=s.value; localStorage.setItem("rij_planta",plantaActiva);
-    areaActiva=null; usuarioActivo=null;
-    rebuildAll(); toast(`Planta ${plantaObj(plantaActiva).nombre}`);
-  };
+function renderPlantaBar(){
+  const box=document.getElementById("plantaBar");
+  const iconos={soluble:"☕",aglomerado:"🏭",envasado:"📦",descafeinado:"🧪",csp:"⚙",almacen:"🗄",mantenimiento:"🔧"};
+  box.innerHTML = PLANTAS.map(p=>
+    `<button class="p-btn ${plantaActiva===p.id?'on':''}" onclick="setPlanta('${p.id}')">${iconos[p.id]||'🏭'} ${p.nombre}</button>`
+  ).join("") + `<button class="p-btn masivo ${plantaActiva==='TODAS'?'on':''}" onclick="setPlanta('TODAS')">📡 Masivo · Todas</button>`;
+}
+function setPlanta(id){
+  plantaActiva=id; localStorage.setItem("rij_planta",plantaActiva);
+  areaActiva=null; usuarioActivo=null; alcanceEditor='una';
+  rebuildAll();
+  toast(id==="TODAS" ? "Vista masiva · todas las plantas" : `Planta ${plantaObj(id).nombre}`);
 }
 
 /* ==================================================================
@@ -604,6 +616,11 @@ function fillSelectores(){
   if(cs) sS.value=cs; if(cd) sD.value=cd;
 }
 function renderPresentar(){
+  if(plantaActiva==="TODAS"){
+    document.getElementById("pContenido").innerHTML=`<div class="locked">
+      <div>Estás en la vista <b style="color:#E8871E">📡 Masivo · Todas</b>. Elige una planta arriba para ver su sesión del día — el masivo sirve para publicar contenido común, no para presentarlo.</div></div>`;
+    return;
+  }
   const s=+document.getElementById("pSemana").value||1;
   const d=+document.getElementById("pDia").value||1;
   const t=temaPorDia(d); if(!t) return;
@@ -661,7 +678,24 @@ document.getElementById("pHoy").onclick=()=>{
    PLAN RIJ (matriz 7 × 4)
    ================================================================== */
 function renderPlan(){
-  const nm=document.getElementById("planPlantaNombre"); if(nm) nm.textContent="Planta "+plantaObj(plantaActiva).nombre;
+  const nm=document.getElementById("planPlantaNombre");
+  if(plantaActiva==="TODAS"){
+    if(nm) nm.textContent="todas las plantas (resumen agregado)";
+    let h=`<tr><th>Día / Tema</th>`;
+    for(let s=1;s<=SEMANAS;s++) h+=`<th>Semana ${s}</th>`;
+    h+=`</tr>`;
+    PLAN.forEach(t=>{
+      h+=`<tr><td class="plan-day" style="--acc:${t.color}"><div class="pd-n">Día ${t.dia}</div><div class="pd-t">${t.icono} ${t.nombre}</div><div class="pd-m">${t.meta}</div></td>`;
+      for(let s=1;s<=SEMANAS;s++){
+        const n=PLANTAS.filter(p=>{ const r=DATA[slotKeyP(p.id,t.dia,s)]; return r&&r.contenido; }).length;
+        h+=`<td class="plan-cell ${n===PLANTAS.length?'has':''}" style="--acc:${t.color}"><span class="pc-ok">${n}/${PLANTAS.length}</span>${t.semanas[s-1]||""}</td>`;
+      }
+      h+=`</tr>`;
+    });
+    document.getElementById("planTbl").innerHTML=h;
+    return;
+  }
+  if(nm) nm.textContent="Planta "+plantaObj(plantaActiva).nombre;
   const hoyD=(new Date().getDay()===0?7:new Date().getDay());
   const hoyS=Math.min(SEMANAS,Math.ceil(new Date().getDate()/7));
   let h=`<tr><th>Día / Tema</th>`;
@@ -688,12 +722,14 @@ function renderPlan(){
    CARGAR
    ================================================================== */
 function renderAreaGrid(){
-  const nm=document.getElementById("cargarPlantaNombre"); if(nm) nm.textContent="Planta "+plantaObj(plantaActiva).nombre;
-  document.getElementById("areaGrid").innerHTML=PLAN.map(t=>`
-    <button class="area-btn ${areaActiva===t.area?'sel':''}" style="--acc:${t.color}" onclick="selArea('${t.area}')">
+  const nm=document.getElementById("cargarPlantaNombre"); if(nm) nm.textContent = plantaActiva==="TODAS" ? "todas las plantas (📡 masivo)" : "Planta "+plantaObj(plantaActiva).nombre;
+  document.getElementById("areaGrid").innerHTML=PLAN.map(t=>{
+    const bloqueada = plantaActiva==="TODAS" && !esAreaComun(t.area);
+    return `<button class="area-btn ${areaActiva===t.area?'sel':''}" style="--acc:${t.color};${bloqueada?'opacity:.35;cursor:not-allowed':''}" ${bloqueada?'disabled title="Solo las áreas comunes publican en modo masivo"':`onclick="selArea('${t.area}')"`}>
       <div class="an">${t.icono} ${t.nombre}</div>
-      <div class="as">Día ${t.dia} · ${t.responsable}</div>
-    </button>`).join("");
+      <div class="as">Día ${t.dia} · ${t.responsable}${bloqueada?' · elige una planta':''}</div>
+    </button>`;
+  }).join("");
 }
 function selArea(a){ areaActiva=a; usuarioActivo=null; semanaEditor=1; alcanceEditor='una'; renderAreaGrid(); renderAreaBody(); }
 
@@ -717,17 +753,23 @@ function renderAreaBody(){
   }).join("");
   const folder=DRIVE_FOLDERS[areaActiva];
   const comun=esAreaComun(areaActiva);
-  const alcanceBox = comun ? `
+  const modoTodas = plantaActiva==="TODAS";
+  if(modoTodas) alcanceEditor='todas';
+  const alcanceBox = modoTodas
+    ? `<div class="form-row"><label>Aplicar este contenido a</label>
+        <div class="wk-tabs"><button type="button" class="wk-tab masivo on" style="--acc:#E8871E" disabled>📡 Masivo · las ${PLANTAS.length} plantas</button></div>
+        <div class="drive-hint" style="--acc:#E8871E">Estás en la vista Masivo: este contenido se publicará automáticamente en las ${PLANTAS.length} plantas. Para afinarlo en una sola, selecciónala arriba.</div></div>`
+    : (comun ? `
     <div class="form-row"><label>Aplicar este contenido a</label>
       <div class="wk-tabs">
         <button type="button" class="wk-tab ${alcanceEditor==='una'?'on':''}" style="--acc:${t.color}" onclick="setAlcance('una')">Solo Planta ${plantaObj(plantaActiva).nombre}</button>
-        <button type="button" class="wk-tab ${alcanceEditor==='todas'?'on':''}" style="--acc:#E8871E" onclick="setAlcance('todas')">📡 Masivo · ${PLANTAS.length} plantas</button>
+        <button type="button" class="wk-tab masivo ${alcanceEditor==='todas'?'on':''}" onclick="setAlcance('todas')">📡 Masivo · ${PLANTAS.length} plantas</button>
       </div>
       <div class="drive-hint" style="--acc:${t.color}">${t.nombre} es un área común: puedes subir una vez y que se refleje en las 7 plantas, o afinarlo planta por planta cambiando el selector superior.</div>
-    </div>` : ``;
+    </div>` : ``);
   box.innerHTML=`<div class="editor" style="--acc:${t.color}">
     <div class="ehead"><span class="dh-ico">${t.icono}</span><h3>${t.nombre}</h3>
-      <span class="meta">Planta ${plantaObj(plantaActiva).nombre} · ${esc(usuarioActivo.nombre)}</span></div>
+      <span class="meta">${modoTodas?'📡 Vista Masiva':'Planta '+plantaObj(plantaActiva).nombre} · ${esc(usuarioActivo.nombre)}</span></div>
     <div class="help" style="margin-bottom:14px">${t.objetivo}</div>
     <div class="wk-tabs" id="wkTabsBox">${wk}</div>
     <div class="guia" style="--acc:${t.color}" id="guiaBox"></div>
@@ -910,7 +952,31 @@ function renderAvisosLista(){
    ESTADO
    ================================================================== */
 function renderPanel(){
-  const stTit=document.getElementById("estadoPlantaNombre"); if(stTit) stTit.textContent="Planta "+plantaObj(plantaActiva).nombre;
+  const stTit=document.getElementById("estadoPlantaNombre");
+  if(plantaActiva==="TODAS"){
+    if(stTit) stTit.textContent="todas las plantas (resumen agregado)";
+    const total=PLAN.length*SEMANAS*PLANTAS.length;
+    let listos=0;
+    PLAN.forEach(t=>{ for(let s=1;s<=SEMANAS;s++){ PLANTAS.forEach(p=>{ const r=DATA[slotKeyP(p.id,t.dia,s)]; if(r&&r.contenido) listos++; }); } });
+    document.getElementById("stTotal").textContent=total;
+    document.getElementById("stListos").textContent=listos;
+    document.getElementById("stPend").textContent=total-listos;
+    document.getElementById("stPct").textContent=Math.round(listos/total*100)+"%";
+    let h=`<div class="mx-row"><span class="mx-h"></span>`;
+    for(let s=1;s<=SEMANAS;s++) h+=`<span class="mx-h">Semana ${s}</span>`;
+    h+=`</div>`;
+    PLAN.forEach(t=>{
+      h+=`<div class="mx-row"><div class="mx-day" style="--acc:${t.color}">${t.icono} ${t.nombre}</div>`;
+      for(let s=1;s<=SEMANAS;s++){
+        const n=PLANTAS.filter(p=>{ const r=DATA[slotKeyP(p.id,t.dia,s)]; return r&&r.contenido; }).length;
+        h+=`<div class="mx-cell ${n===PLANTAS.length?'on':''}">${n}/${PLANTAS.length} plantas</div>`;
+      }
+      h+=`</div>`;
+    });
+    document.getElementById("matrix").innerHTML=h;
+    return;
+  }
+  if(stTit) stTit.textContent="Planta "+plantaObj(plantaActiva).nombre;
   const total=PLAN.length*SEMANAS;
   let listos=0;
   PLAN.forEach(t=>{ for(let s=1;s<=SEMANAS;s++){ const r=DATA[slotKey(t.dia,s)]; if(r&&r.contenido) listos++; } });
@@ -1002,7 +1068,7 @@ function toast(m){
   clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),2200);
 }
 function rebuildAll(){
-  fillPlantaSel(); fillSelectores(); buildAgenda(); renderPresentar();
+  renderPlantaBar(); fillSelectores(); buildAgenda(); renderPresentar();
   renderAvisosBanner(); renderAvisosView();
   renderPlan(); renderAreaGrid();
   if(areaActiva) renderAreaBody();
