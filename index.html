@@ -15,9 +15,9 @@
 
 <style>
 :root{
-  --bg:#14110E; --panel:#1E1A16; --panel-2:#262019;
-  --cream:#F5F0E6; --cream-dim:#C9BFB0; --line:#38302A; --muted:#8C8177;
-  --ok:#4FB05A; --pend:#4A4038;
+  --bg:#14161A; --panel:#1C2028; --panel-2:#242832;
+  --cream:#F2F4F6; --cream-dim:#B9C0CC; --line:#333944; --muted:#8A8F99;
+  --ok:#4FB05A; --pend:#3A3F4A;
   --mono:'IBM Plex Mono',monospace; --disp:'Space Grotesk',sans-serif; --body:'Inter',sans-serif;
 }
 *{box-sizing:border-box}
@@ -28,21 +28,21 @@ button{font-family:var(--body);cursor:pointer;border:none}
 input,textarea,select{font-family:var(--body)}
 a{color:inherit}
 
-header{position:sticky;top:0;z-index:30;background:linear-gradient(180deg,#14110E 0%,#14110ef2 100%);border-bottom:1px solid var(--line);backdrop-filter:blur(6px)}
+header{position:sticky;top:0;z-index:30;background:linear-gradient(180deg,#14161A 0%,#14161Af2 100%);border-bottom:1px solid var(--line);backdrop-filter:blur(6px)}
 .head-in{max-width:1240px;margin:0 auto;padding:13px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .brand{display:flex;align-items:center;gap:12px;min-width:0}
-.mark{width:40px;height:40px;flex:none;border-radius:10px;background:linear-gradient(135deg,#E8871E,#B85c00);display:grid;place-items:center;font-family:var(--disp);font-weight:700;color:#14110E;font-size:14px;box-shadow:inset 0 0 0 1px #ffffff22}
+.mark{width:40px;height:40px;flex:none;border-radius:10px;background:linear-gradient(135deg,#C7D400,#7A8300);display:grid;place-items:center;font-family:var(--disp);font-weight:700;color:#14110E;font-size:14px;box-shadow:inset 0 0 0 1px #ffffff22}
 .brand h1{font-size:16.5px;letter-spacing:-.2px;line-height:1.1}
 .brand .sub{font-family:var(--mono);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-top:2px}
 .spacer{flex:1}
 .fb-badge{font-family:var(--mono);font-size:10px;padding:5px 9px;border-radius:99px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
 .fb-badge.on{color:var(--ok);border-color:#4FB05A55}
-.fb-badge.off{color:#E8871E;border-color:#E8871E55}
+.fb-badge.off{color:#C7D400;border-color:#C7D40055}
 .tabs{display:flex;gap:5px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:5px;flex-wrap:wrap}
 .tab{padding:9px 14px;border-radius:8px;background:transparent;color:var(--cream-dim);font-weight:600;font-size:13px;transition:.15s}
 .tab:hover{color:var(--cream)}
 .tab.active{background:var(--cream);color:#14110E}
-.pill-count{font-family:var(--mono);font-size:9.5px;background:#E8871E;color:#14110E;font-weight:700;border-radius:99px;padding:2px 7px;margin-left:6px}
+.pill-count{font-family:var(--mono);font-size:9.5px;background:#C7D400;color:#14110E;font-weight:700;border-radius:99px;padding:2px 7px;margin-left:6px}
 
 .planta-bar{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
 .p-btn{
@@ -52,8 +52,8 @@ header{position:sticky;top:0;z-index:30;background:linear-gradient(180deg,#14110
 }
 .p-btn:hover{border-color:var(--cream);color:var(--cream)}
 .p-btn.on{background:var(--cream);color:#14110E;border-color:var(--cream)}
-.p-btn.masivo{border-color:#E8871E66;color:#E8871E}
-.p-btn.masivo.on{background:#E8871E;color:#14110E;border-color:#E8871E}
+.p-btn.masivo{border-color:#C7D40066;color:#C7D400}
+.p-btn.masivo.on{background:#C7D400;color:#14110E;border-color:#C7D400}
 
 /* ---- Bloqueo / login global (layout dividido, ref. Cafiver 40 años) ---- */
 .gate{position:fixed;inset:0;z-index:100;background:#0a0908}
@@ -74,7 +74,7 @@ header{position:sticky;top:0;z-index:30;background:linear-gradient(180deg,#14110
 .gate-input input::placeholder{color:#6B5D3E}
 
 .gate-forgot{font-size:12.5px;color:#B7C400;text-decoration:none;cursor:pointer;background:none;padding:0;margin:2px 0 14px;display:inline-block}
-.gate-remember{display:flex;align-items:center;gap:9px;font-size:12.5px;color:#8C8177;margin-bottom:20px;cursor:pointer;user-select:none}
+.gate-remember{display:flex;align-items:center;gap:9px;font-size:12.5px;color:#8A8F99;margin-bottom:20px;cursor:pointer;user-select:none}
 .gate-remember input{width:15px;height:15px;accent-color:#B7C400}
 
 .gate-submit{width:100%;background:#C4D600;color:#14150A;font-weight:700;font-size:13.5px;letter-spacing:1px;padding:14px;border-radius:8px;text-transform:uppercase;transition:.15s}
@@ -103,7 +103,7 @@ header{position:sticky;top:0;z-index:30;background:linear-gradient(180deg,#14110
 .sesion-chip .sc-n{font-weight:600}
 .sesion-chip .sc-c{font-family:var(--mono);font-size:9.5px;color:var(--muted)}
 .sesion-chip button{background:var(--panel-2);border:1px solid var(--line);border-radius:99px;padding:5px 11px;font-family:var(--mono);font-size:10px;color:var(--cream-dim)}
-.sesion-chip button:hover{border-color:#E8871E;color:#E8871E}
+.sesion-chip button:hover{border-color:#C7D400;color:#C7D400}
 
 main{max-width:1240px;margin:0 auto;padding:24px 20px 80px}
 .view{display:none;animation:fade .25s ease}
@@ -115,7 +115,7 @@ main{max-width:1240px;margin:0 auto;padding:24px 20px 80px}
 .field{display:flex;flex-direction:column;gap:6px}
 .field label{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:1.4px;color:var(--muted)}
 select,input[type=text],input[type=password],input[type=date],textarea{background:var(--panel);border:1px solid var(--line);color:var(--cream);border-radius:9px;padding:10px 12px;font-size:14px;outline:none;transition:.15s}
-select:focus,input:focus,textarea:focus{border-color:#E8871E;box-shadow:0 0 0 3px #E8871E22}
+select:focus,input:focus,textarea:focus{border-color:#C7D400;box-shadow:0 0 0 3px #C7D40022}
 select{min-width:150px;cursor:pointer}
 textarea{width:100%;resize:vertical;line-height:1.55}
 .btn{background:var(--cream);color:#14110E;font-weight:700;font-size:14px;padding:11px 20px;border-radius:9px;transition:.15s}
@@ -123,14 +123,14 @@ textarea{width:100%;resize:vertical;line-height:1.55}
 .btn.ghost{background:transparent;color:var(--cream);border:1px solid var(--line)}
 .btn.ghost:hover{border-color:var(--cream)}
 .btn.sm{padding:8px 14px;font-size:13px}
-.note{background:#E8871E14;border:1px solid #E8871E44;border-radius:10px;padding:12px 15px;font-size:13px;color:var(--cream-dim);margin-bottom:20px}
-.note b{color:#E8871E}
+.note{background:#C7D40014;border:1px solid #C7D40044;border-radius:10px;padding:12px 15px;font-size:13px;color:var(--cream-dim);margin-bottom:20px}
+.note b{color:#C7D400}
 .help{font-size:12.5px;color:var(--muted);margin-top:8px;line-height:1.6}
 
 /* ---- Agenda 1-4-4-1 ---- */
 .agenda{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:20px}
 .ag-title{font-family:var(--mono);font-size:10.5px;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
-.ag-model{font-family:var(--mono);font-weight:600;font-size:11px;letter-spacing:2px;color:#E8871E;border:1px solid #E8871E44;border-radius:5px;padding:2px 8px;background:#E8871E14}
+.ag-model{font-family:var(--mono);font-weight:600;font-size:11px;letter-spacing:2px;color:#C7D400;border:1px solid #C7D40044;border-radius:5px;padding:2px 8px;background:#C7D40014}
 .ag-grid{display:grid;grid-template-columns:1fr 4fr 4fr 1fr;gap:9px}
 @media(max-width:980px){.ag-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:560px){.ag-grid{grid-template-columns:1fr}}
@@ -173,7 +173,7 @@ textarea{width:100%;resize:vertical;line-height:1.55}
 /* ---- Avisos ---- */
 .avisos-wrap{margin-bottom:20px;display:flex;flex-direction:column;gap:10px}
 .aviso{background:var(--panel);border:1px solid var(--line);border-radius:12px;border-left:5px solid var(--acc);padding:14px 16px}
-.aviso.urg{background:#2A1710;border-color:#E8871E55}
+.aviso.urg{background:#2A1710;border-color:#C7D40055}
 .av-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
 .av-tag{font-family:var(--mono);font-size:9.5px;letter-spacing:1.4px;text-transform:uppercase;font-weight:600;padding:3px 8px;border-radius:5px;background:var(--acc);color:#14110E}
 .av-tit{font-family:var(--disp);font-size:16.5px;font-weight:600;flex:1;min-width:200px}
@@ -187,7 +187,7 @@ textarea{width:100%;resize:vertical;line-height:1.55}
 .av-empty{border:1px dashed var(--line);border-radius:12px;padding:16px;text-align:center;color:var(--muted);font-size:13.5px}
 .av-list{display:flex;flex-direction:column;gap:10px;margin-top:18px}
 .av-del{background:transparent;border:1px solid var(--line);color:var(--muted);font-family:var(--mono);font-size:10px;padding:4px 9px;border-radius:6px}
-.av-del:hover{border-color:#E8871E;color:#E8871E}
+.av-del:hover{border-color:#C7D400;color:#C7D400}
 .av-vencido{opacity:.5}
 
 /* ---- Plan RIJ (matriz) ---- */
@@ -347,12 +347,12 @@ textarea{width:100%;resize:vertical;line-height:1.55}
     <div class="stat-top">
       <div class="stat"><div class="num" id="stTotal">0</div><div class="lab">Slots del mes</div></div>
       <div class="stat"><div class="num" id="stListos" style="color:var(--ok)">0</div><div class="lab">Capturados</div></div>
-      <div class="stat"><div class="num" id="stPend" style="color:#E8871E">0</div><div class="lab">Pendientes</div></div>
+      <div class="stat"><div class="num" id="stPend" style="color:#C7D400">0</div><div class="lab">Pendientes</div></div>
       <div class="stat"><div class="num" id="stPct">0%</div><div class="lab">Avance</div></div>
     </div>
     <div class="controls">
       <div class="spacer"></div>
-      <a class="folder-link" style="--acc:#E8871E" href="https://drive.google.com/drive/folders/1XX5gqijQjLhbgfcAGS--njahEXg0AbXd" target="_blank" rel="noopener">📁 Carpeta maestra</a>
+      <a class="folder-link" style="--acc:#C7D400" href="https://drive.google.com/drive/folders/1XX5gqijQjLhbgfcAGS--njahEXg0AbXd" target="_blank" rel="noopener">📁 Carpeta maestra</a>
       <button class="btn sm" id="btnExcel">Exportar a Excel</button>
     </div>
     <div class="mx" id="matrix"></div>
@@ -370,7 +370,7 @@ textarea{width:100%;resize:vertical;line-height:1.55}
 // Matriz RIJ Mensual — 7 días temáticos × 4 semanas
 const PLAN = [
 {
-  dia:1, nombre:"Seguridad Industrial", corto:"Seguridad", icono:"⛑", color:"#E8871E",
+  dia:1, nombre:"Seguridad Industrial", corto:"Seguridad", icono:"⛑", color:"#C7D400",
   area:"seguridad", responsable:"Seguridad Industrial",
   meta:"Prevención de incidentes y cumplimiento normativo.",
   objetivo:"Enfocar al equipo en la prevención de accidentes, reforzar comportamientos seguros e identificar condiciones inseguras.",
@@ -531,10 +531,10 @@ const DRIVE_FOLDERS = {
 
 // Estructura 1-4-4-1
 const AGENDA = [
-  { n:"1′", tit:"Apertura",      lbl:"Bienvenida, saludo y pase de asistencia (mencionar ausencias)", acc:"#8C8177" },
+  { n:"1′", tit:"Apertura",      lbl:"Bienvenida, saludo y pase de asistencia (mencionar ausencias)", acc:"#8A8F99" },
   { n:"4′", tit:"Seguimiento",   lbl:"Asignación de tarea, comunicados relevantes y compromiso de la jornada", acc:"#3B6BFF" },
-  { n:"4′", tit:"Tema del día",  lbl:"Profundización en el tema específico del día", acc:"#E8871E" },
-  { n:"1′", tit:"Cierre",        lbl:"Motivación y llamado a la acción para iniciar con máxima energía", acc:"#8C8177" }
+  { n:"4′", tit:"Tema del día",  lbl:"Profundización en el tema específico del día", acc:"#C7D400" },
+  { n:"1′", tit:"Cierre",        lbl:"Motivación y llamado a la acción para iniciar con máxima energía", acc:"#8A8F99" }
 ];
 
 const SEMANAS = 4;
@@ -768,7 +768,7 @@ function fillSelectores(){
 function renderPresentar(){
   if(plantaActiva==="TODAS"){
     document.getElementById("pContenido").innerHTML=`<div class="locked">
-      <div>Estás en la vista <b style="color:#E8871E">📡 Masivo · Todas</b>. Elige una planta arriba para ver su sesión del día — el masivo sirve para publicar contenido común, no para presentarlo.</div></div>`;
+      <div>Estás en la vista <b style="color:#C7D400">📡 Masivo · Todas</b>. Elige una planta arriba para ver su sesión del día — el masivo sirve para publicar contenido común, no para presentarlo.</div></div>`;
     return;
   }
   const s=+document.getElementById("pSemana").value||1;
@@ -808,7 +808,7 @@ Revisa los avisos vigentes que aparecen arriba y márcalos como divulgados.</div
       <div class="blk-foot">${link}<span class="meta">${rec.autor?esc(rec.autor)+" · ":""}${rec.masivo?'📡 Publicado a todas las plantas · ':''}${fecha}</span></div>
     </div>
 
-    <div class="blk" style="--acc:#8C8177">
+    <div class="blk" style="--acc:#8A8F99">
       <div class="blk-h"><span class="blk-min">1′</span><span class="blk-t">Cierre y llamado a la acción</span></div>
       <div class="blk-b">${t.cierre}</div>
     </div>`;
@@ -901,8 +901,8 @@ function renderAreaBody(){
   if(modoTodas) alcanceEditor='todas';
   const alcanceBox = modoTodas
     ? `<div class="form-row"><label>Aplicar este contenido a</label>
-        <div class="wk-tabs"><button type="button" class="wk-tab masivo on" style="--acc:#E8871E" disabled>📡 Masivo · las ${PLANTAS.length} plantas</button></div>
-        <div class="drive-hint" style="--acc:#E8871E">Estás en la vista Masivo: este contenido se publicará automáticamente en las ${PLANTAS.length} plantas. Para afinarlo en una sola, selecciónala arriba.</div></div>`
+        <div class="wk-tabs"><button type="button" class="wk-tab masivo on" style="--acc:#C7D400" disabled>📡 Masivo · las ${PLANTAS.length} plantas</button></div>
+        <div class="drive-hint" style="--acc:#C7D400">Estás en la vista Masivo: este contenido se publicará automáticamente en las ${PLANTAS.length} plantas. Para afinarlo en una sola, selecciónala arriba.</div></div>`
     : (comun ? `
     <div class="form-row"><label>Aplicar este contenido a</label>
       <div class="wk-tabs">
@@ -1016,7 +1016,7 @@ function renderAvisosBanner(){
   if(badge){ if(list.length){badge.style.display="inline-block";badge.textContent=list.length;} else badge.style.display="none"; }
   if(!list.length){ box.innerHTML=""; return; }
   box.innerHTML=list.map(([k,av])=>{
-    const urg=av.prioridad==="urgente", acc=urg?"#E8871E":"#3B6BFF";
+    const urg=av.prioridad==="urgente", acc=urg?"#C7D400":"#3B6BFF";
     const chips=AREAS_PROD.map(a=>{
       const d=(av.divulgado||{})[a];
       return d? `<span class="chip done">✓ ${a} · ${new Date(d.ts).toLocaleDateString("es-MX",{day:"2-digit",month:"2-digit"})}</span>`
@@ -1034,7 +1034,7 @@ function renderAvisosBanner(){
 function renderAvisosView(){
   const box=document.getElementById("avEditorBox"); if(!box) return;
   if(!document.getElementById("avTit")){
-    box.innerHTML=`<div class="editor" style="--acc:#E8871E">
+    box.innerHTML=`<div class="editor" style="--acc:#C7D400">
       <div class="ehead"><h3>Publicar aviso</h3><span class="meta">${esc(sesionActual.nombre)} · ${esc(sesionActual.cargo)}</span></div>
       <div class="form-row"><label>Título</label><input type="text" id="avTit" placeholder="Ej. Cambio de horario de comida en Envasado"></div>
       <div class="form-row"><label>Mensaje</label><textarea id="avMsg" rows="4" placeholder="Lo que el supervisor debe comunicar..."></textarea></div>
@@ -1059,11 +1059,11 @@ function renderAvisosLista(){
   const todos=Object.entries(AVISOS).sort((a,b)=>(b[1].ts||0)-(a[1].ts||0));
   if(!todos.length){ box.innerHTML=`<div class="av-empty">No hay avisos publicados.</div>`; return; }
   box.innerHTML=todos.map(([k,av])=>{
-    const vig=avisoVigente(av), urg=av.prioridad==="urgente", acc=urg?"#E8871E":"#3B6BFF";
+    const vig=avisoVigente(av), urg=av.prioridad==="urgente", acc=urg?"#C7D400":"#3B6BFF";
     const n=Object.keys(av.divulgado||{}).length;
     return `<div class="aviso ${vig?'':'av-vencido'}" style="--acc:${acc}">
       <div class="av-top">
-        <span class="av-tag" style="background:${vig?acc:'#4A4038'};color:${vig?'#14110E':'#8C8177'}">${vig?(urg?'Urgente':'Aviso'):'Vencido'}</span>
+        <span class="av-tag" style="background:${vig?acc:'#3A3F4A'};color:${vig?'#14110E':'#8A8F99'}">${vig?(urg?'Urgente':'Aviso'):'Vencido'}</span>
         <span class="av-tit">${esc(av.titulo)}</span>
         ${sesionActual?`<button class="av-del" onclick="borrarAviso('${k}')">Eliminar</button>`:''}</div>
       <div class="av-msg">${esc(av.mensaje)}</div>
