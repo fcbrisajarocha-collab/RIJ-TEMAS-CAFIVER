@@ -55,6 +55,32 @@ header{position:sticky;top:0;z-index:30;background:linear-gradient(180deg,#14110
 .p-btn.masivo{border-color:#E8871E66;color:#E8871E}
 .p-btn.masivo.on{background:#E8871E;color:#14110E;border-color:#E8871E}
 
+/* ---- Bloqueo / login global ---- */
+.gate{position:fixed;inset:0;z-index:100;background:radial-gradient(circle at 30% 20%,#241d16,#0F0D0B 70%);display:flex;align-items:center;justify-content:center;padding:20px}
+.gate.hidden{display:none}
+.gate-box{max-width:560px;width:100%;text-align:center}
+.gate-box h2{font-size:24px;margin-bottom:4px}
+.gate-sub{font-family:var(--mono);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:26px}
+.gate-users{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:560px){.gate-users{grid-template-columns:1fr}}
+.gate-user{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;text-align:left;color:var(--cream);transition:.15s}
+.gate-user:hover{border-color:var(--cream);transform:translateY(-1px)}
+.gate-user .gu-n{font-family:var(--disp);font-weight:600;font-size:14.5px}
+.gate-user .gu-c{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:3px;line-height:1.4}
+.gate-form{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px;text-align:left;max-width:360px;margin:0 auto}
+.gate-form .gu-n{font-family:var(--disp);font-size:18px;font-weight:600;margin-bottom:2px}
+.gate-form .gu-c{font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:18px}
+.gate-form input{width:100%;margin-bottom:12px}
+.gate-back{background:transparent;color:var(--muted);font-family:var(--mono);font-size:11px;margin-top:8px}
+.gate-back:hover{color:var(--cream)}
+.gate-note{font-size:12px;color:var(--muted);margin-top:14px;line-height:1.6}
+
+.sesion-chip{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:99px;padding:5px 6px 5px 12px;font-size:12.5px}
+.sesion-chip .sc-n{font-weight:600}
+.sesion-chip .sc-c{font-family:var(--mono);font-size:9.5px;color:var(--muted)}
+.sesion-chip button{background:var(--panel-2);border:1px solid var(--line);border-radius:99px;padding:5px 11px;font-family:var(--mono);font-size:10px;color:var(--cream-dim)}
+.sesion-chip button:hover{border-color:#E8871E;color:#E8871E}
+
 main{max-width:1240px;margin:0 auto;padding:24px 20px 80px}
 .view{display:none;animation:fade .25s ease}
 .view.active{display:block}
@@ -208,6 +234,15 @@ textarea{width:100%;resize:vertical;line-height:1.55}
 </head>
 <body>
 
+<div id="loginGate" class="gate">
+  <div class="gate-box">
+    <div class="mark" style="width:52px;height:52px;font-size:18px;margin:0 auto 16px">10′</div>
+    <h2 id="gateTitle">Reunión de Inicio de Jornada</h2>
+    <div class="gate-sub">Selecciona tu nombre para continuar</div>
+    <div id="gateBody"></div>
+  </div>
+</div>
+
 <header>
   <div class="head-in">
     <div class="brand">
@@ -219,6 +254,7 @@ textarea{width:100%;resize:vertical;line-height:1.55}
     </div>
     <div class="spacer"></div>
     <span id="fbBadge" class="fb-badge off">Modo local</span>
+    <div class="sesion-chip" id="sesionChip"></div>
     <div class="planta-bar" id="plantaBar"></div>
     <div class="tabs">
       <button class="tab active" data-view="presentar">Presentar</button>
@@ -424,23 +460,29 @@ const PLANTAS = [
 // Al publicar, eligen si el contenido va solo a la planta activa o a todas de golpe.
 const AREAS_COMUNES = ["seguridad","calidad","inocuidad","ambiente"];
 
-// --- Usuarios con PIN individual (responsable / gerente de cada tema) ---
-// area debe coincidir con el campo "area" de PLAN.
-// planta: "" = el usuario opera en cualquier planta (típico de las áreas comunes: seguridad, calidad, inocuidad, ambiente).
-//         Si se especifica un id de planta, el PIN solo abre esa planta (útil para rendimiento/producción/reconocimiento, que sí varían por planta).
+// --- Personas con acceso ---
+// area: "*" = puede cargar cualquiera de los 7 temas (gerentes/jefes de planta)
+//       o el id de un área común ("seguridad","calidad","inocuidad","ambiente") si su puesto es transversal
+// planta: "*" = opera en las 7 plantas (áreas comunes) | array = solo esas plantas (gerentes de planta)
+// La contraseña NO se define aquí: cada persona la crea la primera vez que entra (ver pantalla de bloqueo).
 const USUARIOS = [
-  { pin:"2601", nombre:"Responsable de Seguridad Industrial (área común)", area:"seguridad",      planta:"" },
-  { pin:"2602", nombre:"Responsable de Inocuidad (área común)",            area:"inocuidad",      planta:"" },
-  { pin:"2603", nombre:"Responsable de Calidad (área común)",              area:"calidad",        planta:"" },
-  { pin:"2606", nombre:"Responsable de Medio Ambiente (área común)",       area:"ambiente",        planta:"" },
-  { pin:"2604", nombre:"Responsable de Rendimiento",     area:"rendimiento",    planta:"" },
-  { pin:"2605", nombre:"Responsable de Producción",      area:"produccion",     planta:"" },
-  { pin:"2607", nombre:"Responsable de Reconocimiento",  area:"reconocimiento", planta:"" },
-  // Ejemplo de PIN distinto por planta para el mismo tema (sustituye o agrega renglones así):
-  // { pin:"3601", nombre:"Ing. Fulano — Producción Envasado",   area:"produccion", planta:"envasado" },
-  // { pin:"3602", nombre:"Ing. Fulano — Producción Aglomerado", area:"produccion", planta:"aglomerado" },
-  { pin:"0000", nombre:"Administrador / Dirección Técnica", area:"admin", planta:"" }
+  { id:"valentin",  nombre:"Valentín Flores Díaz",             cargo:"Gerente de Planta Descafeinado",        area:"*", planta:["descafeinado"] },
+  { id:"rober",     nombre:"Rober Rojas Jarquín",               cargo:"Gerente de Mantenimiento",              area:"*", planta:["mantenimiento"] },
+  { id:"lauracsp",  nombre:"Laura Monserrat Cuevas Palacios",   cargo:"Jefa de Producción CSP",                area:"*", planta:["csp"] },
+  { id:"nestor",    nombre:"Néstor Dalí Santiago Altamirano",   cargo:"Jefe de Aglomerado y Envasado",         area:"*", planta:["aglomerado","envasado"] },
+  { id:"marco",     nombre:"Marco Antonio Gutiérrez López",     cargo:"Jefe de Almacén de Café",               area:"*", planta:["almacen"] },
+  { id:"abimelek",  nombre:"Abimelek Muñoz Rodríguez",          cargo:"Gerente de Planta Soluble",             area:"*", planta:["soluble"] },
+  { id:"laurocal",  nombre:"Laura Aracely Heredia Barreda",     cargo:"Jefa de Gestión de Calidad",            area:"calidad",   planta:"*" },
+  { id:"gloria",    nombre:"Gloria Ana Gabriel Oropeza Miranda",cargo:"Jefa de Seguridad Industrial",          area:"seguridad", planta:"*" },
+  { id:"francisco", nombre:"Francisco Iván Cajica Morales",     cargo:"Gerente de Proyectos y Automatización", area:"*", planta:"*" },
+  // Pendientes por asignar — agrega el renglón cuando tengas el nombre:
+  // { id:"inocuidad_x", nombre:"", cargo:"Responsable de Inocuidad",     area:"inocuidad", planta:"*" },
+  // { id:"ambiente_x",  nombre:"", cargo:"Responsable de Medio Ambiente",area:"ambiente",  planta:"*" },
+  // { id:"reconoc_x",   nombre:"", cargo:"Responsable de Reconocimiento",area:"reconocimiento", planta:"*" },
 ];
+const tienePlanta = (u,pid) => u.planta==="*" || (Array.isArray(u.planta) && u.planta.includes(pid));
+const tieneArea   = (u,area) => u.area==="*" || u.area===area;
+const plantasDe = u => u.planta==="*" ? PLANTAS : PLANTAS.filter(p=>u.planta.includes(p.id));
 
 // Carpetas de Google Drive
 const DRIVE_MAESTRA = "https://drive.google.com/drive/folders/1XX5gqijQjLhbgfcAGS--njahEXg0AbXd";
@@ -470,9 +512,9 @@ let plantaActiva = localStorage.getItem("rij_planta") || PLANTAS[0].id;
 /* ==================================================================
    ESTADO
    ================================================================== */
-let DATA={}, AVISOS={}, db=null, useFB=false;
-let areaActiva=null, usuarioActivo=null, semanaEditor=1, alcanceEditor='una';
-let avisosDesbloqueado=false, avisosAutor="";
+let DATA={}, AVISOS={}, PASSES={}, db=null, useFB=false;
+let areaActiva=null, semanaEditor=1, alcanceEditor='una';
+let sesionActual=null, gateUserSel=null;
 let PREVIEW_ABIERTO={};
 
 const temaPorDia = d => PLAN.find(p=>p.dia===d);
@@ -482,8 +524,17 @@ const slotKeyP = (pid,d,s) => `PL${pid}-D${d}-S${s}`;
 const slotKey = (d,s) => slotKeyP(plantaActiva,d,s);
 function esAreaComun(area){ return AREAS_COMUNES.includes(area); }
 function comunEsteTema(){ return areaActiva && esAreaComun(areaActiva); }
-function usuariosDe(area){ return USUARIOS.filter(u=>u.area===area && (u.planta===""||u.planta===plantaActiva)); }
-function buscarUsuario(pin,area){ return usuariosDe(area).find(u=>u.pin===pin); }
+
+/* --- Hash simple de contraseña (SHA-256 vía WebCrypto, con fallback) --- */
+async function hashPass(str){
+  try{
+    const buf=await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");
+  }catch(e){
+    let h=0; for(let i=0;i<str.length;i++){ h=(h<<5)-h+str.charCodeAt(i); h|=0; }
+    return "x"+Math.abs(h).toString(16);
+  }
+}
 
 /* ==================================================================
    FIREBASE
@@ -494,10 +545,11 @@ function initFirebase(){
     firebase.initializeApp(firebaseConfig);
     db=firebase.firestore(); useFB=true; setBadge(true);
     db.collection(COLECCION).onSnapshot(snap=>{
-      DATA={}; AVISOS={};
+      DATA={}; AVISOS={}; PASSES={};
       snap.forEach(doc=>{
         if(doc.id==="_config") return;
         if(doc.id.startsWith("aviso_")) AVISOS[doc.id]=doc.data();
+        else if(doc.id.startsWith("pass_")) PASSES[doc.id.slice(5)]=doc.data().hash;
         else if(/^PL[\w-]+-D\d-S\d$/.test(doc.id)) DATA[doc.id]=doc.data();
       });
       saveLocal(); rebuildAll();
@@ -513,12 +565,18 @@ function loadLocal(){
   try{
     DATA=JSON.parse(localStorage.getItem("rij_data")||"{}");
     AVISOS=JSON.parse(localStorage.getItem("rij_avisos")||"{}");
-  }catch(e){ DATA={}; AVISOS={}; }
+    PASSES=JSON.parse(localStorage.getItem("rij_passes")||"{}");
+  }catch(e){ DATA={}; AVISOS={}; PASSES={}; }
   rebuildAll();
 }
 function saveLocal(){
   localStorage.setItem("rij_data",JSON.stringify(DATA));
   localStorage.setItem("rij_avisos",JSON.stringify(AVISOS));
+  localStorage.setItem("rij_passes",JSON.stringify(PASSES));
+}
+async function guardarPass(userId,hash){
+  PASSES[userId]=hash; saveLocal();
+  if(useFB){ try{ await db.collection(COLECCION).doc("pass_"+userId).set({hash,ts:Date.now()}); }catch(e){} }
 }
 async function guardarSlot(key,obj){
   DATA[key]=obj; saveLocal();
@@ -583,16 +641,80 @@ function togglePreview(key){ PREVIEW_ABIERTO[key]=PREVIEW_ABIERTO[key]===false; 
 
 function renderPlantaBar(){
   const box=document.getElementById("plantaBar");
+  if(!sesionActual){ box.innerHTML=""; return; }
   const iconos={soluble:"☕",aglomerado:"🏭",envasado:"📦",descafeinado:"🧪",csp:"⚙",almacen:"🗄",mantenimiento:"🔧"};
-  box.innerHTML = PLANTAS.map(p=>
+  const permitidas = plantasDe(sesionActual);
+  box.innerHTML = permitidas.map(p=>
     `<button class="p-btn ${plantaActiva===p.id?'on':''}" onclick="setPlanta('${p.id}')">${iconos[p.id]||'🏭'} ${p.nombre}</button>`
-  ).join("") + `<button class="p-btn masivo ${plantaActiva==='TODAS'?'on':''}" onclick="setPlanta('TODAS')">📡 Masivo · Todas</button>`;
+  ).join("");
+  if(sesionActual.planta==="*"){
+    box.innerHTML += `<button class="p-btn masivo ${plantaActiva==='TODAS'?'on':''}" onclick="setPlanta('TODAS')">📡 Masivo · Todas</button>`;
+  }
 }
 function setPlanta(id){
   plantaActiva=id; localStorage.setItem("rij_planta",plantaActiva);
-  areaActiva=null; usuarioActivo=null; alcanceEditor='una';
+  areaActiva=null; alcanceEditor='una';
   rebuildAll();
   toast(id==="TODAS" ? "Vista masiva · todas las plantas" : `Planta ${plantaObj(id).nombre}`);
+}
+
+/* ==================================================================
+   BLOQUEO / LOGIN GLOBAL
+   ================================================================== */
+function gateAbierta(){ return !sesionActual; }
+function renderGate(){
+  const overlay=document.getElementById("loginGate");
+  if(sesionActual){ overlay.classList.add("hidden"); return; }
+  overlay.classList.remove("hidden");
+  const box=document.getElementById("gateBody");
+
+  if(!gateUserSel){
+    box.innerHTML=`<div class="gate-users">${USUARIOS.map(u=>`
+      <button class="gate-user" onclick="elegirGateUser('${u.id}')">
+        <div class="gu-n">${esc(u.nombre)}</div><div class="gu-c">${esc(u.cargo)}</div>
+      </button>`).join("")}</div>
+      <div class="gate-note">Si no ves tu nombre en la lista, pídele a Producción que te agregue.</div>`;
+    return;
+  }
+  const u=gateUserSel;
+  const tieneHash=!!PASSES[u.id];
+  box.innerHTML=`<div class="gate-form">
+    <div class="gu-n">${esc(u.nombre)}</div><div class="gu-c">${esc(u.cargo)}</div>
+    ${tieneHash?`
+      <input type="password" id="gatePass" placeholder="Tu contraseña">
+      <button class="btn" style="width:100%" onclick="gateLogin()">Entrar</button>`
+    :`
+      <div class="gate-note" style="margin:0 0 12px">Primera vez que entras: crea tu contraseña (mínimo 4 caracteres).</div>
+      <input type="password" id="gatePass" placeholder="Nueva contraseña">
+      <input type="password" id="gatePass2" placeholder="Confírmala">
+      <button class="btn" style="width:100%" onclick="gateCrear()">Crear contraseña y entrar</button>`}
+    <button class="gate-back" onclick="gateUserSel=null;renderGate();">← Elegir otra persona</button>
+  </div>`;
+  setTimeout(()=>{ const i=document.getElementById("gatePass"); if(i){ i.focus(); i.onkeydown=e=>{ if(e.key==="Enter") (tieneHash?gateLogin():gateCrear()); }; } },50);
+}
+function elegirGateUser(id){ gateUserSel=USUARIOS.find(u=>u.id===id); renderGate(); }
+async function gateLogin(){
+  const u=gateUserSel, p=document.getElementById("gatePass").value;
+  const h=await hashPass(p);
+  if(h===PASSES[u.id]){ sesionActual=u; gateUserSel=null; plantaActiva = tienePlanta(u,plantaActiva)?plantaActiva:(u.planta==="*"?PLANTAS[0].id:u.planta[0]); renderGate(); rebuildAll(); toast(`Bienvenido, ${u.nombre.split(" ")[0]}`); }
+  else toast("Contraseña incorrecta");
+}
+async function gateCrear(){
+  const u=gateUserSel, p1=document.getElementById("gatePass").value, p2=document.getElementById("gatePass2").value;
+  if(p1.length<4){ toast("Mínimo 4 caracteres"); return; }
+  if(p1!==p2){ toast("Las contraseñas no coinciden"); return; }
+  const h=await hashPass(p1);
+  await guardarPass(u.id,h);
+  sesionActual=u; gateUserSel=null;
+  plantaActiva = tienePlanta(u,plantaActiva)?plantaActiva:(u.planta==="*"?PLANTAS[0].id:u.planta[0]);
+  renderGate(); rebuildAll(); toast(`Contraseña creada. Bienvenido, ${u.nombre.split(" ")[0]}`);
+}
+function cerrarSesion(){ sesionActual=null; gateUserSel=null; areaActiva=null; renderGate(); }
+function renderSesionChip(){
+  const box=document.getElementById("sesionChip"); if(!box) return;
+  if(!sesionActual){ box.innerHTML=""; return; }
+  box.innerHTML=`<span><span class="sc-n">${esc(sesionActual.nombre.split(" ").slice(0,2).join(" "))}</span><br><span class="sc-c">${esc(sesionActual.cargo)}</span></span>
+    <button onclick="cerrarSesion()">Cerrar sesión</button>`;
 }
 
 /* ==================================================================
@@ -724,28 +846,22 @@ function renderPlan(){
 function renderAreaGrid(){
   const nm=document.getElementById("cargarPlantaNombre"); if(nm) nm.textContent = plantaActiva==="TODAS" ? "todas las plantas (📡 masivo)" : "Planta "+plantaObj(plantaActiva).nombre;
   document.getElementById("areaGrid").innerHTML=PLAN.map(t=>{
-    const bloqueada = plantaActiva==="TODAS" && !esAreaComun(t.area);
-    return `<button class="area-btn ${areaActiva===t.area?'sel':''}" style="--acc:${t.color};${bloqueada?'opacity:.35;cursor:not-allowed':''}" ${bloqueada?'disabled title="Solo las áreas comunes publican en modo masivo"':`onclick="selArea('${t.area}')"`}>
+    const sinPermisoArea = !tieneArea(sesionActual,t.area);
+    const modoTodasNoComun = plantaActiva==="TODAS" && !esAreaComun(t.area);
+    const bloqueada = sinPermisoArea || modoTodasNoComun;
+    const motivo = sinPermisoArea ? "no tienes permiso sobre este tema" : "solo áreas comunes en modo masivo";
+    return `<button class="area-btn ${areaActiva===t.area?'sel':''}" style="--acc:${t.color};${bloqueada?'opacity:.35;cursor:not-allowed':''}" ${bloqueada?`disabled title="${motivo}"`:`onclick="selArea('${t.area}')"`}>
       <div class="an">${t.icono} ${t.nombre}</div>
-      <div class="as">Día ${t.dia} · ${t.responsable}${bloqueada?' · elige una planta':''}</div>
+      <div class="as">Día ${t.dia} · ${t.responsable}${bloqueada?' · '+motivo:''}</div>
     </button>`;
   }).join("");
 }
-function selArea(a){ areaActiva=a; usuarioActivo=null; semanaEditor=1; alcanceEditor='una'; renderAreaGrid(); renderAreaBody(); }
+function selArea(a){ areaActiva=a; semanaEditor=1; alcanceEditor='una'; renderAreaGrid(); renderAreaBody(); }
 
 function renderAreaBody(){
   const box=document.getElementById("areaBody");
   if(!areaActiva){ box.innerHTML=""; return; }
   const t=temaPorArea(areaActiva);
-  if(!usuarioActivo){
-    box.innerHTML=`<div class="locked" style="border-color:${t.color}55">
-      <div>Ingresa tu <b style="color:${t.color}">PIN personal</b> para capturar el contenido de ${t.nombre} · Planta ${plantaObj(plantaActiva).nombre}.</div>
-      <div style="margin-top:12px;display:flex;gap:10px;justify-content:center">
-        <input type="password" id="pinInput" placeholder="PIN" style="max-width:130px;text-align:center;letter-spacing:3px">
-        <button class="btn sm" onclick="checkPin()">Entrar</button></div></div>`;
-    setTimeout(()=>{const i=document.getElementById("pinInput");if(i){i.focus();i.onkeydown=e=>{if(e.key==='Enter')checkPin();};}},50);
-    return;
-  }
   if(document.getElementById("eBody")) return; // no reconstruir mientras se escribe
   const wk=[1,2,3,4].map(s=>{
     const ok=DATA[slotKey(t.dia,s)]&&DATA[slotKey(t.dia,s)].contenido;
@@ -769,7 +885,7 @@ function renderAreaBody(){
     </div>` : ``);
   box.innerHTML=`<div class="editor" style="--acc:${t.color}">
     <div class="ehead"><span class="dh-ico">${t.icono}</span><h3>${t.nombre}</h3>
-      <span class="meta">${modoTodas?'📡 Vista Masiva':'Planta '+plantaObj(plantaActiva).nombre} · ${esc(usuarioActivo.nombre)}</span></div>
+      <span class="meta">${modoTodas?'📡 Vista Masiva':'Planta '+plantaObj(plantaActiva).nombre} · ${esc(sesionActual.nombre)}</span></div>
     <div class="help" style="margin-bottom:14px">${t.objetivo}</div>
     <div class="wk-tabs" id="wkTabsBox">${wk}</div>
     <div class="guia" style="--acc:${t.color}" id="guiaBox"></div>
@@ -785,20 +901,12 @@ function renderAreaBody(){
     </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
       <button class="btn" onclick="guardarContenido()">Guardar contenido</button>
-      <button class="btn ghost sm" onclick="limpiarEditor()">Limpiar</button>
-      <button class="btn ghost sm" onclick="cerrarSesionArea()">Cerrar sesión</button></div>
+      <button class="btn ghost sm" onclick="limpiarEditor()">Limpiar</button></div>
   </div>`;
   cargarEnEditor();
 }
-function cerrarSesionArea(){ usuarioActivo=null; alcanceEditor='una'; renderAreaBody(); }
 function setSemanaEditor(s){ semanaEditor=s; document.querySelectorAll("#wkTabsBox .wk-tab").forEach((b,i)=>b.classList.toggle("on",i===s-1)); cargarEnEditor(); }
 function setAlcance(v){ alcanceEditor=v; renderAreaBody(); }
-function checkPin(){
-  const v=document.getElementById("pinInput").value.trim();
-  const u=buscarUsuario(v,areaActiva);
-  if(u){ usuarioActivo=u; renderAreaBody(); toast(`Bienvenido, ${u.nombre}`); }
-  else toast("PIN incorrecto para esta planta / tema");
-}
 function cargarEnEditor(){
   const t=temaPorArea(areaActiva); if(!t) return;
   const g=document.getElementById("guiaBox");
@@ -832,7 +940,7 @@ async function guardarContenido(){
     dia:t.dia, semana:semanaEditor, area:t.area, tema:t.nombre,
     subtema:t.semanas[semanaEditor-1]||"", contenido,
     recurso:document.getElementById("eRec").value.trim(),
-    autor:usuarioActivo.nombre, ts:Date.now()
+    autor:sesionActual.nombre, ts:Date.now()
   };
   if(comunEsteTema() && alcanceEditor==="todas"){
     if(!confirm(`Vas a publicar en las ${PLANTAS.length} plantas a la vez. ¿Confirmas?`)) return;
@@ -897,16 +1005,9 @@ function renderAvisosBanner(){
 }
 function renderAvisosView(){
   const box=document.getElementById("avEditorBox"); if(!box) return;
-  if(!avisosDesbloqueado){
-    box.innerHTML=`<div class="locked">
-      <div>Ingresa tu PIN para publicar un aviso.</div>
-      <div style="margin-top:12px;display:flex;gap:10px;justify-content:center">
-        <input type="password" id="avPin" placeholder="PIN" style="max-width:130px;text-align:center;letter-spacing:3px">
-        <button class="btn sm" onclick="checkPinAviso()">Entrar</button></div></div>`;
-    setTimeout(()=>{const i=document.getElementById("avPin");if(i) i.onkeydown=e=>{if(e.key==='Enter')checkPinAviso();};},50);
-  }else if(!document.getElementById("avTit")){
+  if(!document.getElementById("avTit")){
     box.innerHTML=`<div class="editor" style="--acc:#E8871E">
-      <div class="ehead"><h3>Publicar aviso</h3><span class="meta">${esc(avisosAutor)}</span></div>
+      <div class="ehead"><h3>Publicar aviso</h3><span class="meta">${esc(sesionActual.nombre)} · ${esc(sesionActual.cargo)}</span></div>
       <div class="form-row"><label>Título</label><input type="text" id="avTit" placeholder="Ej. Cambio de horario de comida en Envasado"></div>
       <div class="form-row"><label>Mensaje</label><textarea id="avMsg" rows="4" placeholder="Lo que el supervisor debe comunicar..."></textarea></div>
       <div class="controls" style="margin-bottom:12px">
@@ -916,18 +1017,12 @@ function renderAvisosView(){
   }
   renderAvisosLista();
 }
-function checkPinAviso(){
-  const v=document.getElementById("avPin").value.trim();
-  const u=USUARIOS.find(x=>x.pin===v && (x.planta===""||x.planta===plantaActiva));
-  if(u){ avisosDesbloqueado=true; avisosAutor=u.nombre; renderAvisosView(); toast(`Bienvenido, ${u.nombre}`); }
-  else toast("PIN incorrecto");
-}
 async function publicarAviso(){
   const titulo=document.getElementById("avTit").value.trim();
   if(!titulo){ toast("Escribe el título"); return; }
   await guardarAviso({ titulo, mensaje:document.getElementById("avMsg").value.trim(),
     prioridad:document.getElementById("avPri").value, vence:document.getElementById("avVence").value||"",
-    autor:avisosAutor, ts:Date.now(), divulgado:{} });
+    autor:sesionActual.nombre, ts:Date.now(), divulgado:{} });
   document.getElementById("avTit").value=""; document.getElementById("avMsg").value=""; document.getElementById("avVence").value="";
   toast("Aviso publicado ✓");
 }
@@ -942,7 +1037,7 @@ function renderAvisosLista(){
       <div class="av-top">
         <span class="av-tag" style="background:${vig?acc:'#4A4038'};color:${vig?'#14110E':'#8C8177'}">${vig?(urg?'Urgente':'Aviso'):'Vencido'}</span>
         <span class="av-tit">${esc(av.titulo)}</span>
-        ${avisosDesbloqueado?`<button class="av-del" onclick="borrarAviso('${k}')">Eliminar</button>`:''}</div>
+        ${sesionActual?`<button class="av-del" onclick="borrarAviso('${k}')">Eliminar</button>`:''}</div>
       <div class="av-msg">${esc(av.mensaje)}</div>
       <div class="av-meta">${esc(av.autor||"")} · divulgado en ${n} de ${AREAS_PROD.length} áreas</div></div>`;
   }).join("");
@@ -1068,6 +1163,9 @@ function toast(m){
   clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),2200);
 }
 function rebuildAll(){
+  renderGate();
+  if(!sesionActual) return; // el resto de la app espera a que haya sesión
+  renderSesionChip();
   renderPlantaBar(); fillSelectores(); buildAgenda(); renderPresentar();
   renderAvisosBanner(); renderAvisosView();
   renderPlan(); renderAreaGrid();
@@ -1076,7 +1174,7 @@ function rebuildAll(){
 }
 
 initFirebase();
-rebuildAll();
+renderGate();
 document.getElementById("pHoy").click();
 </script>
 </body>
