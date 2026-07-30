@@ -525,6 +525,7 @@ const AREAS_COMUNES = ["seguridad","calidad","inocuidad","ambiente"];
 // planta: "*" = opera en las 7 plantas (áreas comunes) | array = solo esas plantas (gerentes de planta)
 // La contraseña NO se define aquí: cada persona la crea la primera vez que entra (ver pantalla de bloqueo).
 const USUARIOS = [
+  // --- Gerentes / jefes de planta y de área (rol por defecto: acceso completo a lo suyo) ---
   { id:"valentin",  nombre:"Valentín Flores Díaz",             cargo:"Gerente de Planta Descafeinado",        area:"*", planta:["descafeinado"] },
   { id:"rober",     nombre:"Rober Rojas Jarquín",               cargo:"Gerente de Mantenimiento",              area:"*", planta:["mantenimiento"] },
   { id:"lauracsp",  nombre:"Laura Monserrat Cuevas Palacios",   cargo:"Jefa de Producción CSP",                area:"*", planta:["csp"] },
@@ -538,10 +539,40 @@ const USUARIOS = [
   // { id:"inocuidad_x", nombre:"", cargo:"Responsable de Inocuidad",     area:"inocuidad", planta:"*" },
   // { id:"ambiente_x",  nombre:"", cargo:"Responsable de Medio Ambiente",area:"ambiente",  planta:"*" },
   // { id:"reconoc_x",   nombre:"", cargo:"Responsable de Reconocimiento",area:"reconocimiento", planta:"*" },
+
+  // --- Supervisores (rol:"supervisor" = solo lectura: Presentar + marcar avisos, sin Cargar ni editar Plan RIJ) ---
+  // Extraídos del Reporte Gerencial de Asistencia (30/07/2026). Nota: "PSE" = Planta Soluble Esférico.
+  { id:"manuelcorona", nombre:"Manuel Corona Landeta",           cargo:"Supervisor de Descafeinado",   area:"*", planta:["descafeinado"], rol:"supervisor" },
+  { id:"martinbello",  nombre:"Martin Bello Lozada",              cargo:"Supervisor de Soluble Esférico",area:"*", planta:["soluble"],      rol:"supervisor" },
+  { id:"antonioortega",nombre:"Antonio Ortega Cortes",            cargo:"Supervisor de Soluble Esférico",area:"*", planta:["soluble"],      rol:"supervisor" },
+  { id:"medinachico",  nombre:"Medina Chico Fermin",              cargo:"Supervisor de Mantenimiento",  area:"*", planta:["mantenimiento"],rol:"supervisor" },
+  { id:"rodriguezedu", nombre:"Rodriguez Martinez Eduardo",       cargo:"Supervisor de Mantenimiento",  area:"*", planta:["mantenimiento"],rol:"supervisor" },
+  { id:"carlosgarcia", nombre:"Carlos Anniceres Garcia Falcon",   cargo:"Coordinador de PT · Almacén",  area:"*", planta:["almacen"],      rol:"supervisor" },
+  // --- Actualización 2 (reporte 30/07/2026, segunda carga) ---
+  { id:"hernandezalfredo", nombre:"Hernandez Martinez Alfredo",   cargo:"Supervisor de Descafeinado",           area:"*", planta:["descafeinado"], rol:"supervisor" },
+  { id:"crisostomovera",   nombre:"Crisostomo Vera Emmanuel",     cargo:"Supervisor de Descafeinado",           area:"*", planta:["descafeinado"], rol:"supervisor" },
+  { id:"balvincamacho",    nombre:"Balvin Camacho Ernesto Omar",  cargo:"Supervisor de Producción Descafeinado",area:"*", planta:["descafeinado"], rol:"supervisor" },
+  { id:"aaronhuerta",      nombre:"Aaron Huerta Cruz",            cargo:"Supervisor de Envasado",               area:"*", planta:["envasado"],     rol:"supervisor" },
+  { id:"luiscalderon",     nombre:"Luis Calderon Garcia",         cargo:"Supervisor de Soluble Esférico",       area:"*", planta:["soluble"],      rol:"supervisor" },
+  { id:"juanarguelles",    nombre:"Juan Arguelles Juarez",        cargo:"Supervisor de Soluble Esférico",       area:"*", planta:["soluble"],      rol:"supervisor" },
+  { id:"joseluislazaro",   nombre:"Jose Luis Lazaro Xitlama",     cargo:"Supervisor de Soluble Esférico",       area:"*", planta:["soluble"],      rol:"supervisor" },
+  { id:"abielramirez",     nombre:"Abiel Ramirez Joel",           cargo:"Supervisor de Mantenimiento",          area:"*", planta:["mantenimiento"],rol:"supervisor" },
+  { id:"huertarioselroul", nombre:"Huerta Rios Elroul Paul",      cargo:"Supervisor de Mantenimiento",          area:"*", planta:["mantenimiento"],rol:"supervisor" },
+  { id:"martingarate",     nombre:"Martin Garate S.",             cargo:"Supervisor de Almacén de Café",        area:"*", planta:["almacen"],      rol:"supervisor" },
+  { id:"juanlopezl",       nombre:"Juan Lopez L.",                cargo:"Supervisor de Almacén de Café",        area:"*", planta:["almacen"],      rol:"supervisor" },
+  { id:"israelaranda",     nombre:"Israel Yosef Aranda Cid",      cargo:"Coordinador de Insumos · Almacén",     area:"*", planta:["almacen"],      rol:"supervisor" },
+  { id:"josearturoortiz",  nombre:"Jose Arturo Ortiz Suarez",     cargo:"Supervisor de Almacén de Café",        area:"*", planta:["almacen"],      rol:"supervisor" },
+  { id:"valentinmartinez", nombre:"Valentin Martinez M.",         cargo:"Supervisor de Almacén de Café",        area:"*", planta:["almacen"],      rol:"supervisor" },
+  { id:"medardolopez",     nombre:"Medardo Lopez Rivas",           cargo:"Acceso Gerencial · Mantenimiento",          area:"*", planta:["mantenimiento"],rol:"supervisor" },
+  { id:"jacquelineluna",   nombre:"Jacqueline Luna Ortega",        cargo:"Asistente Administrativo de Gerencia · Mantenimiento", area:"*", planta:["mantenimiento"],rol:"supervisor" },
+  { id:"jimenezlugo",      nombre:"Jimenez Lugo Manuel",           cargo:"Auxiliar de Programador · Mantenimiento",   area:"*", planta:["mantenimiento"],rol:"supervisor" },
+  // Pendientes: sigue sin aparecer ningún supervisor de CSP ni de Aglomerado en los dos reportes recibidos.
 ];
 const tienePlanta = (u,pid) => u.planta==="*" || (Array.isArray(u.planta) && u.planta.includes(pid));
 const tieneArea   = (u,area) => u.area==="*" || u.area===area;
 const plantasDe = u => u.planta==="*" ? PLANTAS : PLANTAS.filter(p=>u.planta.includes(p.id));
+const esSupervisor = u => u && u.rol==="supervisor";
+
 
 // Carpetas de Google Drive
 const DRIVE_MAESTRA = "https://drive.google.com/drive/folders/1XX5gqijQjLhbgfcAGS--njahEXg0AbXd";
@@ -798,7 +829,8 @@ function cerrarSesion(){ sesionActual=null; localStorage.removeItem("rij_sesion_
 function renderSesionChip(){
   const box=document.getElementById("sesionChip"); if(!box) return;
   if(!sesionActual){ box.innerHTML=""; return; }
-  box.innerHTML=`<span><span class="sc-n">${esc(sesionActual.nombre.split(" ").slice(0,2).join(" "))}</span><br><span class="sc-c">${esc(sesionActual.cargo)}</span></span>
+  const badgeLectura = esSupervisor(sesionActual) ? `<span class="pill-count" style="background:#3A3F4A;color:var(--cream-dim)">solo lectura</span>` : "";
+  box.innerHTML=`<span><span class="sc-n">${esc(sesionActual.nombre.split(" ").slice(0,2).join(" "))}${badgeLectura}</span><br><span class="sc-c">${esc(sesionActual.cargo)}</span></span>
     <button onclick="cerrarSesion()">Cerrar sesión</button>`;
 }
 
@@ -890,7 +922,7 @@ function subtemaDe(dia,semana){
   if(PLAN_OVERRIDES[k]!==undefined) return PLAN_OVERRIDES[k];
   const t=temaPorDia(dia); return t.semanas[semana-1]||"";
 }
-function puedeEditarPlan(){ return !!sesionActual && sesionActual.area==="*"; }
+function puedeEditarPlan(){ return !!sesionActual && sesionActual.area==="*" && !esSupervisor(sesionActual); }
 async function guardarOverridePlan(dia,semana,texto){
   const k=`D${dia}-S${semana}`;
   PLAN_OVERRIDES[k]=texto;
@@ -973,6 +1005,12 @@ function bindPlanCeldas(){
    ================================================================== */
 function renderAreaGrid(){
   const nm=document.getElementById("cargarPlantaNombre"); if(nm) nm.textContent = plantaActiva==="TODAS" ? "todas las plantas (📡 masivo)" : "Planta "+plantaObj(plantaActiva).nombre;
+  if(esSupervisor(sesionActual)){
+    document.getElementById("areaGrid").innerHTML=`<div class="locked" style="grid-column:1/-1">
+      <div>Tu acceso es de <b style="color:#C7D400">solo lectura</b>. Puedes presentar la junta y marcar avisos como divulgados, pero cargar contenido le corresponde a tu gerente de planta.</div>
+    </div>`;
+    return;
+  }
   document.getElementById("areaGrid").innerHTML=PLAN.map(t=>{
     const sinPermisoArea = !tieneArea(sesionActual,t.area);
     const modoTodasNoComun = plantaActiva==="TODAS" && !esAreaComun(t.area);
@@ -984,7 +1022,7 @@ function renderAreaGrid(){
     </button>`;
   }).join("");
 }
-function selArea(a){ areaActiva=a; semanaEditor=1; alcanceEditor='una'; renderAreaGrid(); renderAreaBody(); }
+function selArea(a){ if(esSupervisor(sesionActual)) return; areaActiva=a; semanaEditor=1; alcanceEditor='una'; renderAreaGrid(); renderAreaBody(); }
 
 let ultimoEditorKey=null;
 function renderAreaBody(){
