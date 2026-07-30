@@ -890,7 +890,7 @@ function subtemaDe(dia,semana){
   if(PLAN_OVERRIDES[k]!==undefined) return PLAN_OVERRIDES[k];
   const t=temaPorDia(dia); return t.semanas[semana-1]||"";
 }
-function puedeEditarPlan(){ return !!sesionActual && sesionActual.area==="*" && sesionActual.planta==="*"; }
+function puedeEditarPlan(){ return !!sesionActual && sesionActual.area==="*"; }
 async function guardarOverridePlan(dia,semana,texto){
   const k=`D${dia}-S${semana}`;
   PLAN_OVERRIDES[k]=texto;
@@ -903,7 +903,7 @@ function renderLockBtn(){
   if(!autorizado){
     b.className="btn ghost sm"; b.style.opacity=.6; b.disabled=true;
     b.innerHTML=`🔒 <span class="lock-badge">Bloqueado</span>`;
-    b.title="Solo Dirección Técnica / Proyectos puede editar el plan maestro";
+    b.title="Solo gerentes/jefes de planta y Dirección Técnica pueden editar el plan maestro";
     return;
   }
   b.disabled=false; b.style.opacity=1;
@@ -986,11 +986,14 @@ function renderAreaGrid(){
 }
 function selArea(a){ areaActiva=a; semanaEditor=1; alcanceEditor='una'; renderAreaGrid(); renderAreaBody(); }
 
+let ultimoEditorKey=null;
 function renderAreaBody(){
   const box=document.getElementById("areaBody");
-  if(!areaActiva){ box.innerHTML=""; return; }
+  if(!areaActiva){ box.innerHTML=""; ultimoEditorKey=null; return; }
   const t=temaPorArea(areaActiva);
-  if(document.getElementById("eBody")) return; // no reconstruir mientras se escribe
+  const claveActual=`${plantaActiva}|${areaActiva}`;
+  if(document.getElementById("eBody") && ultimoEditorKey===claveActual) return; // no reconstruir mientras se escribe EN EL MISMO tema/planta
+  ultimoEditorKey=claveActual;
   const wk=[1,2,3,4].map(s=>{
     const ok=DATA[slotKey(t.dia,s)]&&DATA[slotKey(t.dia,s)].contenido;
     return `<button class="wk-tab ${semanaEditor===s?'on':''}" style="--acc:${t.color}" onclick="setSemanaEditor(${s})">Semana ${s}${ok?'<span class="dotok"></span>':''}</button>`;
