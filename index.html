@@ -244,6 +244,19 @@ textarea{width:100%;resize:vertical;line-height:1.55}
 .config{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-top:24px}
 .config h3{font-size:15px;margin-bottom:12px}
 
+.sys-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:900px){.sys-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.sys-grid{grid-template-columns:1fr}}
+.sys-card{
+  display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);
+  border-left:4px solid var(--acc);border-radius:12px;padding:16px 18px;text-decoration:none;color:var(--cream);transition:.15s;
+}
+.sys-card:hover{transform:translateY(-2px);border-color:var(--acc)}
+.sys-ico{font-size:22px;flex:none}
+.sys-n{font-family:var(--disp);font-weight:600;font-size:14.5px}
+.sys-s{font-family:var(--mono);font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;margin-top:2px}
+.sys-arrow{margin-left:auto;color:var(--muted);font-size:15px}
+
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--cream);color:#14110E;font-weight:600;font-size:14px;padding:12px 22px;border-radius:10px;opacity:0;transition:.25s;z-index:60;box-shadow:0 10px 40px #0008}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
@@ -290,6 +303,7 @@ textarea{width:100%;resize:vertical;line-height:1.55}
     <div class="sesion-chip" id="sesionChip"></div>
     <div class="planta-bar" id="plantaBar"></div>
     <div class="tabs">
+      <button class="tab" data-view="sistemas">Sistemas</button>
       <button class="tab active" data-view="presentar">Presentar</button>
       <button class="tab" data-view="plan">Plan RIJ</button>
       <button class="tab" data-view="cargar">Cargar</button>
@@ -360,6 +374,12 @@ textarea{width:100%;resize:vertical;line-height:1.55}
       <h3>Ciclo</h3>
       <div class="help">El plan RIJ es mensual y fijo: 7 días temáticos × 4 semanas = 28 sesiones. Para cambiar los subtemas, edita la constante <b>PLAN</b> al inicio del script.</div>
     </div>
+  </section>
+
+  <!-- ============ SISTEMAS ============ -->
+  <section id="sistemas" class="view">
+    <div class="note">Accesos directos a los demás sistemas de Cafiver en GitHub Pages. Se abren en una pestaña nueva; no comparten sesión con la Junta de 10 Minutos.</div>
+    <div class="sys-grid" id="sysGrid"></div>
   </section>
 
 </main>
@@ -689,6 +709,35 @@ function setPlanta(id){
   areaActiva=null; alcanceEditor='una';
   rebuildAll();
   toast(id==="TODAS" ? "Vista masiva · todas las plantas" : `Planta ${plantaObj(id).nombre}`);
+}
+
+// --- Otros sistemas de Cafiver en GitHub Pages (asistencia, RIJ de otras plantas, etc.) ---
+const SISTEMAS = [
+  { nombre:"Panel Gerencial",                url:"PEGA_AQUI_EL_LINK_DEL_PANEL_GERENCIAL",                                             icono:"📊", acc:"#C7D400" },
+  { nombre:"Link de Registro de Asistencia", url:"https://fcbrisajarocha-collab.github.io/Panel-Gerencial-CAFIVER/",                icono:"🗓", acc:"#C7D400" },
+  { nombre:"Asistencia · Soluble Esférico",  url:"https://fcbrisajarocha-collab.github.io/Sistema-de-asistencia-Esferico/",         icono:"☕", acc:"#C7D400" },
+  { nombre:"Asistencia · Envasado",          url:"https://fcbrisajarocha-collab.github.io/Sistema-de-asistencia-envasado-/",         icono:"📦", acc:"#C7D400" },
+  { nombre:"Asistencia · Descafeinado",      url:"https://fcbrisajarocha-collab.github.io/Sistema-de-asistencia-descafeinado/",      icono:"🧪", acc:"#C7D400" },
+  { nombre:"Asistencia · CSP",               url:"https://fcbrisajarocha-collab.github.io/Sistema-de-asistencia-CSP-/",              icono:"⚙", acc:"#C7D400" },
+  { nombre:"Asistencia · Almacén",           url:"https://fcbrisajarocha-collab.github.io/Registro-de-asistencia-almacen/",          icono:"🗄", acc:"#C7D400" },
+  { nombre:"RIJ · Mantenimiento",            url:"https://fcbrisajarocha-collab.github.io/Sistema-RIJ-Mantenimiento-CAFIVER/",       icono:"🔧", acc:"#C7D400" },
+  // Pendiente: agrega aquí el link cuando exista el sistema de asistencia de Aglomerado
+];
+function renderSistemas(){
+  const box=document.getElementById("sysGrid"); if(!box) return;
+  box.innerHTML = SISTEMAS.map(s=>{
+    const pendiente = s.url.startsWith("PEGA_AQUI");
+    return pendiente
+      ? `<div class="sys-card" style="--acc:${s.acc};opacity:.4;cursor:not-allowed">
+          <span class="sys-ico">${s.icono}</span>
+          <span><span class="sys-n">${s.nombre}</span><br><span class="sys-s">Falta el link</span></span>
+        </div>`
+      : `<a class="sys-card" style="--acc:${s.acc}" href="${s.url}" target="_blank" rel="noopener">
+          <span class="sys-ico">${s.icono}</span>
+          <span><span class="sys-n">${s.nombre}</span><br><span class="sys-s">GitHub Pages</span></span>
+          <span class="sys-arrow">↗</span>
+        </a>`;
+  }).join("");
 }
 
 /* ==================================================================
@@ -1197,6 +1246,7 @@ function rebuildAll(){
   renderPlantaBar(); fillSelectores(); buildAgenda(); renderPresentar();
   renderAvisosBanner(); renderAvisosView();
   renderPlan(); renderAreaGrid();
+  renderSistemas();
   if(areaActiva) renderAreaBody();
   renderPanel();
 }
