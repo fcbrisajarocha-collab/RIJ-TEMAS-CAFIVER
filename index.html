@@ -202,6 +202,10 @@ textarea{width:100%;resize:vertical;line-height:1.55}
 .plan-cell.has{border-color:#4FB05A44}
 .plan-cell .pc-ok{position:absolute;top:8px;right:9px;font-size:10px;color:var(--ok);font-family:var(--mono)}
 .plan-cell.hoy{box-shadow:0 0 0 2px var(--acc)}
+.pc-text{display:block}
+.pc-text[contenteditable="true"]{outline:2px dashed #C7D400;cursor:text;background:#22261f;border-radius:5px;padding:2px 4px;display:block}
+.pc-text[contenteditable="true"]:focus{outline:2px solid #C7D400;background:#262b1e}
+.lock-badge{font-family:var(--mono);font-size:10.5px;letter-spacing:1px;text-transform:uppercase}
 
 /* ---- Cargar ---- */
 .area-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
@@ -334,6 +338,7 @@ textarea{width:100%;resize:vertical;line-height:1.55}
   <section id="plan" class="view">
     <div class="note">Plan de la <b id="planPlantaNombre"></b>. Esta es la <b>planificación mensual</b>: cada día tiene su tema fijo y cada semana su subtema. Las áreas revisan aquí qué les toca preparar. El check verde indica que el contenido ya está cargado.</div>
     <div class="controls">
+      <button class="btn sm" id="btnLockPlan" style="display:flex;align-items:center;gap:7px"></button>
       <div class="spacer"></div>
       <button class="btn ghost sm" onclick="window.print()">Imprimir / PDF</button>
       <button class="btn sm" id="btnExcelPlan">Exportar a Excel</button>
@@ -497,6 +502,7 @@ const COLECCION = "junta10_temas";
 // Regla de Firestore (sin cambios de nombre, misma colección):
 //   match /junta10_temas/{docId} { allow read, write: if true; }
 // Los IDs de documento ahora llevan el prefijo de planta: PL<planta>-D<dia>-S<semana>
+// El plan maestro editable vive en un único documento: _plan_overrides
 
 // --- Plantas de Cafiver: cada una lleva su PROPIA planificación (mismos 7 temas, contenido independiente) ---
 const PLANTAS = [
@@ -601,6 +607,7 @@ function initFirebase(){
       DATA={}; AVISOS={}; PASSES={};
       snap.forEach(doc=>{
         if(doc.id==="_config") return;
+        if(doc.id==="_plan_overrides"){ PLAN_OVERRIDES=doc.data()||{}; return; }
         if(doc.id.startsWith("aviso_")) AVISOS[doc.id]=doc.data();
         else if(doc.id.startsWith("pass_")) PASSES[doc.id.slice(5)]=doc.data().hash;
         else if(/^PL[\w-]+-D\d-S\d$/.test(doc.id)) DATA[doc.id]=doc.data();
@@ -619,13 +626,15 @@ function loadLocal(){
     DATA=JSON.parse(localStorage.getItem("rij_data")||"{}");
     AVISOS=JSON.parse(localStorage.getItem("rij_avisos")||"{}");
     PASSES=JSON.parse(localStorage.getItem("rij_passes")||"{}");
-  }catch(e){ DATA={}; AVISOS={}; PASSES={}; }
+    PLAN_OVERRIDES=JSON.parse(localStorage.getItem("rij_plan_overrides")||"{}");
+  }catch(e){ DATA={}; AVISOS={}; PASSES={}; PLAN_OVERRIDES={}; }
   rebuildAll();
 }
 function saveLocal(){
   localStorage.setItem("rij_data",JSON.stringify(DATA));
   localStorage.setItem("rij_avisos",JSON.stringify(AVISOS));
   localStorage.setItem("rij_passes",JSON.stringify(PASSES));
+  localStorage.setItem("rij_plan_overrides",JSON.stringify(PLAN_OVERRIDES));
 }
 async function guardarPass(userId,hash){
   PASSES[userId]=hash; saveLocal();
@@ -823,7 +832,7 @@ function renderPresentar(){
   const d=+document.getElementById("pDia").value||1;
   const t=temaPorDia(d); if(!t) return;
   const rec=DATA[slotKey(d,s)]||{};
-  const sub=t.semanas[s-1]||"";
+  const sub=subtemaDe(d,s);
   const prev=renderPreview(rec.recurso,slotKey(d,s));
   const fecha=rec.ts?new Date(rec.ts).toLocaleDateString("es-MX",{day:"2-digit",month:"short",year:"numeric"}):"";
   const link=rec.recurso?`<a href="${rec.recurso}" target="_blank" rel="noopener">Ver recurso ↗</a>`:`<span></span>`;
@@ -873,10 +882,40 @@ document.getElementById("pHoy").onclick=()=>{
 };
 
 /* ==================================================================
-   PLAN RIJ (matriz 7 × 4)
+   PLAN RIJ (matriz 7 × 4) — con candado de edición
    ================================================================== */
+let PLAN_OVERRIDES={}, planEditando=false;
+function subtemaDe(dia,semana){
+  const k=`D${dia}-S${semana}`;
+  if(PLAN_OVERRIDES[k]!==undefined) return PLAN_OVERRIDES[k];
+  const t=temaPorDia(dia); return t.semanas[semana-1]||"";
+}
+function puedeEditarPlan(){ return !!sesionActual && sesionActual.area==="*" && sesionActual.planta==="*"; }
+async function guardarOverridePlan(dia,semana,texto){
+  const k=`D${dia}-S${semana}`;
+  PLAN_OVERRIDES[k]=texto;
+  localStorage.setItem("rij_plan_overrides",JSON.stringify(PLAN_OVERRIDES));
+  if(useFB){ try{ await db.collection(COLECCION).doc("_plan_overrides").set(PLAN_OVERRIDES); }catch(e){ toast("Guardado local (sin conexión)"); } }
+}
+function renderLockBtn(){
+  const b=document.getElementById("btnLockPlan"); if(!b) return;
+  const autorizado=puedeEditarPlan();
+  if(!autorizado){
+    b.className="btn ghost sm"; b.style.opacity=.6; b.disabled=true;
+    b.innerHTML=`🔒 <span class="lock-badge">Bloqueado</span>`;
+    b.title="Solo Dirección Técnica / Proyectos puede editar el plan maestro";
+    return;
+  }
+  b.disabled=false; b.style.opacity=1;
+  b.className = planEditando ? "btn sm" : "btn ghost sm";
+  b.style.background = planEditando ? "#C7D400" : "";
+  b.innerHTML = planEditando ? `🔓 <span class="lock-badge">Modo edición · toca una celda</span>` : `🔒 <span class="lock-badge">Bloqueado · click para editar</span>`;
+  b.onclick=()=>{ planEditando=!planEditando; renderPlan(); if(planEditando) toast("Modo edición activado. Los cambios se guardan al salir de cada celda."); };
+}
 function renderPlan(){
+  renderLockBtn();
   const nm=document.getElementById("planPlantaNombre");
+  const editable = planEditando && puedeEditarPlan();
   if(plantaActiva==="TODAS"){
     if(nm) nm.textContent="todas las plantas (resumen agregado)";
     let h=`<tr><th>Día / Tema</th>`;
@@ -886,11 +925,12 @@ function renderPlan(){
       h+=`<tr><td class="plan-day" style="--acc:${t.color}"><div class="pd-n">Día ${t.dia}</div><div class="pd-t">${t.icono} ${t.nombre}</div><div class="pd-m">${t.meta}</div></td>`;
       for(let s=1;s<=SEMANAS;s++){
         const n=PLANTAS.filter(p=>{ const r=DATA[slotKeyP(p.id,t.dia,s)]; return r&&r.contenido; }).length;
-        h+=`<td class="plan-cell ${n===PLANTAS.length?'has':''}" style="--acc:${t.color}"><span class="pc-ok">${n}/${PLANTAS.length}</span>${t.semanas[s-1]||""}</td>`;
+        h+=`<td class="plan-cell ${n===PLANTAS.length?'has':''}" style="--acc:${t.color}"><span class="pc-ok">${n}/${PLANTAS.length}</span><span class="pc-text" ${editable?`contenteditable="true" data-dia="${t.dia}" data-sem="${s}"`:''}>${esc(subtemaDe(t.dia,s))}</span></td>`;
       }
       h+=`</tr>`;
     });
     document.getElementById("planTbl").innerHTML=h;
+    if(editable) bindPlanCeldas();
     return;
   }
   if(nm) nm.textContent="Planta "+plantaObj(plantaActiva).nombre;
@@ -909,11 +949,23 @@ function renderPlan(){
       const ok=r&&r.contenido;
       const esHoy=(t.dia===hoyD&&s===hoyS);
       h+=`<td class="plan-cell ${ok?'has':''} ${esHoy?'hoy':''}" style="--acc:${t.color}">
-        ${ok?'<span class="pc-ok">✓</span>':''}${t.semanas[s-1]||""}</td>`;
+        ${ok?'<span class="pc-ok">✓</span>':''}<span class="pc-text" ${editable?`contenteditable="true" data-dia="${t.dia}" data-sem="${s}"`:''}>${esc(subtemaDe(t.dia,s))}</span></td>`;
     }
     h+=`</tr>`;
   });
   document.getElementById("planTbl").innerHTML=h;
+  if(editable) bindPlanCeldas();
+}
+function bindPlanCeldas(){
+  document.querySelectorAll('#planTbl .pc-text[contenteditable="true"]').forEach(sp=>{
+    sp.onblur=async()=>{
+      const dia=+sp.dataset.dia, sem=+sp.dataset.sem;
+      const texto=sp.textContent.trim();
+      await guardarOverridePlan(dia,sem,texto);
+      toast(`Día ${dia} · Semana ${sem} actualizado ✓`);
+    };
+    sp.onkeydown=e=>{ if(e.key==="Enter"){ e.preventDefault(); sp.blur(); } };
+  });
 }
 
 /* ==================================================================
@@ -986,7 +1038,7 @@ function setAlcance(v){ alcanceEditor=v; renderAreaBody(); }
 function cargarEnEditor(){
   const t=temaPorArea(areaActiva); if(!t) return;
   const g=document.getElementById("guiaBox");
-  if(g) g.innerHTML=`<div class="g-l">Subtema definido · Semana ${semanaEditor}</div><div class="g-t">${t.semanas[semanaEditor-1]||""}</div>`;
+  if(g) g.innerHTML=`<div class="g-l">Subtema definido · Semana ${semanaEditor}</div><div class="g-t">${esc(subtemaDe(t.dia,semanaEditor))}</div>`;
   const rec=DATA[slotKey(t.dia,semanaEditor)]||{};
   const b=document.getElementById("eBody"), r=document.getElementById("eRec");
   if(b) b.value=rec.contenido||"";
@@ -1190,7 +1242,7 @@ function exportarExcel(){
       const r=DATA[slotKey(t.dia,s)]||{};
       plan.push({
         "Planta":nombrePlanta, "Día":t.dia, "Tema":t.nombre, "Responsable":t.responsable, "Meta":t.meta,
-        "Semana":s, "Subtema":t.semanas[s-1]||"",
+        "Semana":s, "Subtema":subtemaDe(t.dia,s),
         "Contenido cargado":r.contenido||"", "Recurso":r.recurso||"",
         "Estatus":r.contenido?"Capturado":"Pendiente",
         "Actualizado":r.ts?new Date(r.ts).toLocaleString("es-MX"):""
@@ -1199,7 +1251,7 @@ function exportarExcel(){
   });
   const matriz=PLAN.map(t=>{
     const row={"Día":t.dia,"Tema":t.nombre};
-    for(let s=1;s<=SEMANAS;s++) row["Semana "+s]=t.semanas[s-1]||"";
+    for(let s=1;s<=SEMANAS;s++) row["Semana "+s]=subtemaDe(t.dia,s);
     return row;
   });
   const av=Object.entries(AVISOS).sort((a,b)=>(b[1].ts||0)-(a[1].ts||0)).map(([k,x])=>{
