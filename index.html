@@ -336,7 +336,7 @@ textarea{width:100%;resize:vertical;line-height:1.55}
 
   <!-- ============ PLAN RIJ ============ -->
   <section id="plan" class="view">
-    <div class="note">Plan de la <b id="planPlantaNombre"></b>. Esta es la <b>planificación mensual</b>: cada día tiene su tema fijo y cada semana su subtema. Las áreas revisan aquí qué les toca preparar. El check verde indica que el contenido ya está cargado.</div>
+    <div class="note">Plan de la <b id="planPlantaNombre"></b>. La semana que se muestra se calcula por la <b>semana calendario del año</b> (ISO), ciclando entre Semana 1 y Semana 4 — no se reinicia el día 1 de cada mes. Las áreas revisan aquí qué les toca preparar. El check verde indica que el contenido ya está cargado.</div>
     <div class="controls">
       <button class="btn sm" id="btnLockPlan" style="display:flex;align-items:center;gap:7px"></button>
       <div class="spacer"></div>
@@ -377,7 +377,7 @@ textarea{width:100%;resize:vertical;line-height:1.55}
     <div class="mx" id="matrix"></div>
     <div class="config">
       <h3>Ciclo</h3>
-      <div class="help">El plan RIJ es mensual y fijo: 7 días temáticos × 4 semanas = 28 sesiones. Para cambiar los subtemas, edita la constante <b>PLAN</b> al inicio del script.</div>
+      <div class="help">El plan RIJ tiene 7 días temáticos × 4 semanas = 28 sesiones, y la semana activa se calcula por la semana calendario ISO del año (se repite cada 4 semanas de forma continua, sin reiniciar por mes). Para cambiar los subtemas, edita la constante <b>PLAN</b> al inicio del script.</div>
     </div>
   </section>
 
@@ -595,6 +595,18 @@ const AGENDA = [
 ];
 
 const SEMANAS = 4;
+// Semana calendario del año (ISO 8601), ciclada dentro de 1..SEMANAS para saber qué semana toca del plan RIJ.
+function semanaISO(fecha){
+  const d=new Date(Date.UTC(fecha.getFullYear(),fecha.getMonth(),fecha.getDate()));
+  const dayNum=(d.getUTCDay()+6)%7; // lunes=0 ... domingo=6
+  d.setUTCDate(d.getUTCDate()-dayNum+3);
+  const primerJueves=new Date(Date.UTC(d.getUTCFullYear(),0,4));
+  const diff=d-primerJueves;
+  return 1+Math.round(diff/(7*24*60*60*1000));
+}
+function semanaCicloActual(){
+  return ((semanaISO(new Date())-1)%SEMANAS)+1;
+}
 const AREAS_PROD = ["Envasado","Descafeinado","PSE","Mantenimiento","Almacén"];
 
 let plantaActiva = localStorage.getItem("rij_planta") || PLANTAS[0].id;
@@ -907,7 +919,7 @@ document.getElementById("pDia").onchange=renderPresentar;
 document.getElementById("pHoy").onclick=()=>{
   const js=new Date().getDay();          // 0=Dom
   const dia = js===0 ? 7 : js;           // Lun=1 ... Dom=7
-  const semana = Math.min(SEMANAS, Math.ceil(new Date().getDate()/7));
+  const semana = semanaCicloActual();
   document.getElementById("pDia").value=dia;
   document.getElementById("pSemana").value=semana;
   renderPresentar(); toast(`Semana ${semana} · Día ${dia}`);
@@ -967,7 +979,7 @@ function renderPlan(){
   }
   if(nm) nm.textContent="Planta "+plantaObj(plantaActiva).nombre;
   const hoyD=(new Date().getDay()===0?7:new Date().getDay());
-  const hoyS=Math.min(SEMANAS,Math.ceil(new Date().getDate()/7));
+  const hoyS=semanaCicloActual();
   let h=`<tr><th>Día / Tema</th>`;
   for(let s=1;s<=SEMANAS;s++) h+=`<th>Semana ${s}</th>`;
   h+=`</tr>`;
