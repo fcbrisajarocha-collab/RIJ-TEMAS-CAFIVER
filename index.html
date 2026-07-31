@@ -916,14 +916,18 @@ Revisa los avisos vigentes que aparecen arriba y márcalos como divulgados.</div
 }
 document.getElementById("pSemana").onchange=renderPresentar;
 document.getElementById("pDia").onchange=renderPresentar;
-document.getElementById("pHoy").onclick=()=>{
+function irAHoy(silencioso){
+  const sSel=document.getElementById("pSemana"), dSel=document.getElementById("pDia");
+  if(!sSel || !sSel.options.length) return; // los selects aún no tienen opciones (sin sesión / sin planta)
   const js=new Date().getDay();          // 0=Dom
   const dia = js===0 ? 7 : js;           // Lun=1 ... Dom=7
   const semana = semanaCicloActual();
-  document.getElementById("pDia").value=dia;
-  document.getElementById("pSemana").value=semana;
-  renderPresentar(); toast(`Semana ${semana} · Día ${dia}`);
-};
+  dSel.value=dia;
+  sSel.value=semana;
+  renderPresentar();
+  if(!silencioso) toast(`Semana ${semana} · Día ${dia}`);
+}
+document.getElementById("pHoy").onclick=()=>irAHoy(false);
 
 /* ==================================================================
    PLAN RIJ (matriz 7 × 4) — con candado de edición
@@ -1343,6 +1347,7 @@ function toast(m){
   const t=document.getElementById("toast"); t.textContent=m; t.classList.add("show");
   clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove("show"),2200);
 }
+let yaFuiAHoy=false;
 function rebuildAll(){
   renderGate();
   if(!sesionActual) return; // el resto de la app espera a que haya sesión
@@ -1353,13 +1358,13 @@ function rebuildAll(){
   renderSistemas();
   if(areaActiva) renderAreaBody();
   renderPanel();
+  if(!yaFuiAHoy){ yaFuiAHoy=true; irAHoy(true); }
 }
 
 const recordado = localStorage.getItem("rij_sesion_id");
 if(recordado){ const u=USUARIOS.find(x=>x.id===recordado); if(u) sesionActual=u; }
 initFirebase();
 renderGate();
-document.getElementById("pHoy").click();
 </script>
 </body>
 </html>
