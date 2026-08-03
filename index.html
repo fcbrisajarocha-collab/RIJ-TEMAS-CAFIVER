@@ -939,7 +939,8 @@ function subtemaDe(dia,semana){
   if(PLAN_OVERRIDES[k]!==undefined) return PLAN_OVERRIDES[k];
   const t=temaPorDia(dia); return t.semanas[semana-1]||"";
 }
-function puedeEditarPlan(){ return !!sesionActual && sesionActual.area==="*" && !esSupervisor(sesionActual); }
+function puedeEditarPlan(){ return !!sesionActual && !esSupervisor(sesionActual) && (sesionActual.area==="*" || esAreaComun(sesionActual.area)); }
+function puedeEditarFila(dia){ return !!sesionActual && !esSupervisor(sesionActual) && tieneArea(sesionActual,temaPorDia(dia).area); }
 async function guardarOverridePlan(dia,semana,texto){
   const k=`D${dia}-S${semana}`;
   PLAN_OVERRIDES[k]=texto;
@@ -952,34 +953,43 @@ function renderLockBtn(){
   if(!autorizado){
     b.className="btn ghost sm"; b.style.opacity=.6; b.disabled=true;
     b.innerHTML=`🔒 <span class="lock-badge">Bloqueado</span>`;
-    b.title="Solo gerentes/jefes de planta y Dirección Técnica pueden editar el plan maestro";
+    b.title="Solo gerentes/jefes de planta, Dirección Técnica y responsables de área común (Seguridad, Calidad, Inocuidad, Ambiente) pueden editar el plan maestro";
     return;
   }
   b.disabled=false; b.style.opacity=1;
   b.className = planEditando ? "btn sm" : "btn ghost sm";
   b.style.background = planEditando ? "#C7D400" : "";
   b.innerHTML = planEditando ? `🔓 <span class="lock-badge">Modo edición · toca una celda</span>` : `🔒 <span class="lock-badge">Bloqueado · click para editar</span>`;
-  b.onclick=()=>{ planEditando=!planEditando; renderPlan(); if(planEditando) toast("Modo edición activado. Los cambios se guardan al salir de cada celda."); };
+  b.onclick=()=>{
+    planEditando=!planEditando; renderPlan();
+    if(planEditando){
+      const soloSuFila = sesionActual.area!=="*";
+      toast(soloSuFila
+        ? "Modo edición activado. Solo puedes editar la fila de tu tema."
+        : "Modo edición activado. Los cambios se guardan al salir de cada celda.");
+    }
+  };
 }
 function renderPlan(){
   renderLockBtn();
   const nm=document.getElementById("planPlantaNombre");
-  const editable = planEditando && puedeEditarPlan();
+  const modoEdicion = planEditando; // el permiso real se evalúa por fila con puedeEditarFila
   if(plantaActiva==="TODAS"){
     if(nm) nm.textContent="todas las plantas (resumen agregado)";
     let h=`<tr><th>Día / Tema</th>`;
     for(let s=1;s<=SEMANAS;s++) h+=`<th>Semana ${s}</th>`;
     h+=`</tr>`;
     PLAN.forEach(t=>{
+      const editableFila = modoEdicion && puedeEditarFila(t.dia);
       h+=`<tr><td class="plan-day" style="--acc:${t.color}"><div class="pd-n">Día ${t.dia}</div><div class="pd-t">${t.icono} ${t.nombre}</div><div class="pd-m">${t.meta}</div></td>`;
       for(let s=1;s<=SEMANAS;s++){
         const n=PLANTAS.filter(p=>{ const r=DATA[slotKeyP(p.id,t.dia,s)]; return r&&r.contenido; }).length;
-        h+=`<td class="plan-cell ${n===PLANTAS.length?'has':''}" style="--acc:${t.color}"><span class="pc-ok">${n}/${PLANTAS.length}</span><span class="pc-text" ${editable?`contenteditable="true" data-dia="${t.dia}" data-sem="${s}"`:''}>${esc(subtemaDe(t.dia,s))}</span></td>`;
+        h+=`<td class="plan-cell ${n===PLANTAS.length?'has':''}" style="--acc:${t.color}"><span class="pc-ok">${n}/${PLANTAS.length}</span><span class="pc-text" ${editableFila?`contenteditable="true" data-dia="${t.dia}" data-sem="${s}"`:''}>${esc(subtemaDe(t.dia,s))}</span></td>`;
       }
       h+=`</tr>`;
     });
     document.getElementById("planTbl").innerHTML=h;
-    if(editable) bindPlanCeldas();
+    if(modoEdicion) bindPlanCeldas();
     return;
   }
   if(nm) nm.textContent="Planta "+plantaObj(plantaActiva).nombre;
@@ -989,6 +999,7 @@ function renderPlan(){
   for(let s=1;s<=SEMANAS;s++) h+=`<th>Semana ${s}</th>`;
   h+=`</tr>`;
   PLAN.forEach(t=>{
+    const editableFila = modoEdicion && puedeEditarFila(t.dia);
     h+=`<tr><td class="plan-day" style="--acc:${t.color}">
       <div class="pd-n">Día ${t.dia}</div>
       <div class="pd-t">${t.icono} ${t.nombre}</div>
@@ -998,12 +1009,12 @@ function renderPlan(){
       const ok=r&&r.contenido;
       const esHoy=(t.dia===hoyD&&s===hoyS);
       h+=`<td class="plan-cell ${ok?'has':''} ${esHoy?'hoy':''}" style="--acc:${t.color}">
-        ${ok?'<span class="pc-ok">✓</span>':''}<span class="pc-text" ${editable?`contenteditable="true" data-dia="${t.dia}" data-sem="${s}"`:''}>${esc(subtemaDe(t.dia,s))}</span></td>`;
+        ${ok?'<span class="pc-ok">✓</span>':''}<span class="pc-text" ${editableFila?`contenteditable="true" data-dia="${t.dia}" data-sem="${s}"`:''}>${esc(subtemaDe(t.dia,s))}</span></td>`;
     }
     h+=`</tr>`;
   });
   document.getElementById("planTbl").innerHTML=h;
-  if(editable) bindPlanCeldas();
+  if(modoEdicion) bindPlanCeldas();
 }
 function bindPlanCeldas(){
   document.querySelectorAll('#planTbl .pc-text[contenteditable="true"]').forEach(sp=>{
