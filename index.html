@@ -619,16 +619,32 @@ function semanaISO(fecha){
 function semanaCicloActual(){
   return ((semanaISO(new Date())-1)%SEMANAS)+1;
 }
+const MESES=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+function rangoSemanaISO(fecha){
+  const d=new Date(Date.UTC(fecha.getFullYear(),fecha.getMonth(),fecha.getDate()));
+  const dayNum=(d.getUTCDay()+6)%7;
+  const lunes=new Date(d); lunes.setUTCDate(d.getUTCDate()-dayNum);
+  const domingo=new Date(lunes); domingo.setUTCDate(lunes.getUTCDate()+6);
+  return {lunes,domingo};
+}
+function textoRangoSemana(fecha){
+  const {lunes,domingo}=rangoSemanaISO(fecha);
+  const dl=lunes.getUTCDate(), dd=domingo.getUTCDate();
+  const ml=MESES[lunes.getUTCMonth()], md=MESES[domingo.getUTCMonth()];
+  if(lunes.getUTCMonth()===domingo.getUTCMonth()) return `${dl}–${dd} de ${md}`;
+  return `${dl} de ${ml} – ${dd} de ${md}`;
+}
 function renderIsoBadges(){
   const hoy=new Date();
   const iso=semanaISO(hoy);
   const anio=hoy.getFullYear();
+  const rango=textoRangoSemana(hoy);
   const b1=document.getElementById("isoBadge");
-  if(b1) b1.textContent=`Semana calendario ${iso} de ${anio}`;
+  if(b1) b1.textContent=`Semana ${iso} de ${anio} · ${rango}`;
   const b2=document.getElementById("isoBadgeMini");
-  if(b2) b2.textContent=`· Semana calendario ${iso}/${anio}`;
+  if(b2) b2.textContent=`· Semana ${iso}/${anio} · ${rango}`;
   const b3=document.getElementById("isoBadgeNote");
-  if(b3) b3.textContent=`semana calendario ${iso} de ${anio}`;
+  if(b3) b3.textContent=`semana calendario ${iso} de ${anio} (${rango})`;
 }
 const AREAS_PROD = ["Envasado","Descafeinado","PSE","Mantenimiento","Almacén"];
 
