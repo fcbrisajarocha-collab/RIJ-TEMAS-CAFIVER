@@ -492,12 +492,12 @@ const PLAN = [
    CONFIGURACIÓN
    ================================================================== */
 const firebaseConfig = {
-  apiKey:            "PEGA_AQUI_TU_API_KEY",
+  apiKey:            "AIzaSyBjcblj8HNjK8aNZc5PGCTuUYYGopkAmHk",
   authDomain:        "upav-docente.firebaseapp.com",
   projectId:         "upav-docente",
-  storageBucket:     "upav-docente.appspot.com",
-  messagingSenderId: "PEGA_AQUI",
-  appId:             "PEGA_AQUI"
+  storageBucket:     "upav-docente.firebasestorage.app",
+  messagingSenderId: "975857831905",
+  appId:             "1:975857831905:web:e4cb2d40cac56ab4690ca0"
 };
 const COLECCION = "junta10_temas";
 // Regla de Firestore (sin cambios de nombre, misma colección):
@@ -533,13 +533,12 @@ const USUARIOS = [
   { id:"nestor",    nombre:"Néstor Dalí Santiago Altamirano",   cargo:"Jefe de Aglomerado y Envasado",         area:"*", planta:["aglomerado","envasado"] },
   { id:"marco",     nombre:"Marco Antonio Gutiérrez López",     cargo:"Jefe de Almacén de Café",               area:"*", planta:["almacen"] },
   { id:"abimelek",  nombre:"Abimelek Muñoz Rodríguez",          cargo:"Gerente de Planta Soluble",             area:"*", planta:["soluble"] },
-  { id:"laurocal",  nombre:"Laura Aracely Heredia Barreda",     cargo:"Jefa de Gestión de Calidad",            area:"calidad",   planta:"*" },
-  { id:"arianasanchez", nombre:"Ariana Sanchez Gamez",          cargo:"Coordinadora de Gestión de la Calidad", area:"calidad",   planta:"*" },
+  { id:"laurocal",  nombre:"Laura Aracely Heredia Barreda",     cargo:"Jefa de Gestión de Calidad e Inocuidad",            area:["calidad","inocuidad"],   planta:"*" },
+  { id:"arianasanchez", nombre:"Ariana Sanchez Gamez",          cargo:"Coordinadora de Gestión de la Calidad e Inocuidad", area:["calidad","inocuidad"],   planta:"*" },
   { id:"gloria",    nombre:"Gloria Ana Gabriel Oropeza Miranda",cargo:"Jefa de Seguridad Industrial",          area:"seguridad", planta:"*" },
   { id:"francisco", nombre:"Francisco Iván Cajica Morales",     cargo:"Gerente de Proyectos y Automatización", area:"*", planta:"*" },
   { id:"akarimoreno",nombre:"Akari Moreno Guerra",            cargo:"Supervisor de Medio Ambiente",          area:"ambiente",  planta:"*" },
   // Pendientes por asignar — agrega el renglón cuando tengas el nombre:
-  // { id:"inocuidad_x", nombre:"", cargo:"Responsable de Inocuidad",     area:"inocuidad", planta:"*" },
   // { id:"reconoc_x",   nombre:"", cargo:"Responsable de Reconocimiento",area:"reconocimiento", planta:"*" },
 
   // --- Supervisores (rol:"supervisor" = solo lectura: Presentar + marcar avisos, sin Cargar ni editar Plan RIJ) ---
@@ -571,7 +570,7 @@ const USUARIOS = [
   // Pendientes: sigue sin aparecer ningún supervisor de CSP ni de Aglomerado en los dos reportes recibidos.
 ];
 const tienePlanta = (u,pid) => u.planta==="*" || (Array.isArray(u.planta) && u.planta.includes(pid));
-const tieneArea   = (u,area) => u.area==="*" || u.area===area;
+const tieneArea   = (u,area) => u.area==="*" || (Array.isArray(u.area) ? u.area.includes(area) : u.area===area);
 const plantasDe = u => u.planta==="*" ? PLANTAS : PLANTAS.filter(p=>u.planta.includes(p.id));
 const esSupervisor = u => u && u.rol==="supervisor";
 
@@ -951,7 +950,12 @@ function subtemaDe(dia,semana){
   if(PLAN_OVERRIDES[k]!==undefined) return PLAN_OVERRIDES[k];
   const t=temaPorDia(dia); return t.semanas[semana-1]||"";
 }
-function puedeEditarPlan(){ return !!sesionActual && !esSupervisor(sesionActual) && (sesionActual.area==="*" || esAreaComun(sesionActual.area)); }
+function puedeEditarPlan(){
+  if(!sesionActual || esSupervisor(sesionActual)) return false;
+  if(sesionActual.area==="*") return true;
+  const areas = Array.isArray(sesionActual.area) ? sesionActual.area : [sesionActual.area];
+  return areas.some(esAreaComun);
+}
 function puedeEditarFila(dia){ return !!sesionActual && !esSupervisor(sesionActual) && tieneArea(sesionActual,temaPorDia(dia).area); }
 async function guardarOverridePlan(dia,semana,texto){
   const k=`D${dia}-S${semana}`;
