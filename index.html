@@ -72,6 +72,10 @@ header{position:sticky;top:0;z-index:30;background:linear-gradient(180deg,#14161
 .gate-input input{width:100%;padding:13px 14px 13px 40px;background:transparent;border:1px solid #3A3226;border-radius:8px;color:var(--cream);font-size:14px;outline:none}
 .gate-input input:focus{border-color:#B7C400}
 .gate-input input::placeholder{color:#6B5D3E}
+.gate-input select{width:100%;padding:13px 14px 13px 40px;background:#14110E;border:1px solid #3A3226;border-radius:8px;color:var(--cream);font-size:14px;outline:none;cursor:pointer;appearance:none;-webkit-appearance:none}
+.gate-input select:focus{border-color:#B7C400}
+.gate-input select option{background:#14110E;color:var(--cream)}
+.gate-select-wrap::after{content:"▾";position:absolute;right:14px;top:50%;transform:translateY(-50%);color:#6B5D3E;pointer-events:none;font-size:13px}
 
 .gate-forgot{font-size:12.5px;color:#B7C400;text-decoration:none;cursor:pointer;background:none;padding:0;margin:2px 0 14px;display:inline-block}
 .gate-remember{display:flex;align-items:center;gap:9px;font-size:12.5px;color:#8A8F99;margin-bottom:20px;cursor:pointer;user-select:none}
@@ -839,9 +843,14 @@ function renderGate(){
   if(sesionActual){ overlay.classList.add("hidden"); return; }
   overlay.classList.remove("hidden");
   const box=document.getElementById("gateBody");
+  const nombresOrdenados=[...USUARIOS].sort((a,b)=>a.nombre.localeCompare(b.nombre,"es"));
   box.innerHTML=`
-    <datalist id="gateNombres">${USUARIOS.map(u=>`<option value="${esc(u.nombre)}">`).join("")}</datalist>
-    <div class="gate-input"><span>👤</span><input type="text" id="gateNombre" list="gateNombres" placeholder="Nombre completo" autocomplete="off"></div>
+    <div class="gate-input gate-select-wrap"><span>👤</span>
+      <select id="gateNombre">
+        <option value="" disabled selected>Selecciona tu nombre</option>
+        ${nombresOrdenados.map(u=>`<option value="${u.id}">${esc(u.nombre)}</option>`).join("")}
+      </select>
+    </div>
     <div class="gate-input"><span>🔒</span><input type="password" id="gatePass" placeholder="Contraseña"></div>
     <a class="gate-forgot" onclick="gateOlvide()">¿Se te olvidó tu contraseña?</a>
     <label class="gate-remember"><input type="checkbox" id="gateRecordar"> Mantenme logueado</label>
@@ -856,10 +865,10 @@ function gateOlvide(){
   toast("Pide a Producción / Dirección Técnica que reinicie tu acceso.");
 }
 async function gateSubmit(){
-  const nombre=document.getElementById("gateNombre").value;
+  const idSel=document.getElementById("gateNombre").value;
   const pass=document.getElementById("gatePass").value;
-  const u=buscarPorNombre(nombre);
-  if(!u){ toast("No encontramos ese nombre en la lista"); return; }
+  const u=USUARIOS.find(x=>x.id===idSel);
+  if(!u){ toast("Selecciona tu nombre de la lista"); return; }
   if(pass.length<4){ toast("La contraseña debe tener al menos 4 caracteres"); return; }
   const h=await hashPass(pass);
   const existente=PASSES[u.id];
