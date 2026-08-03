@@ -301,6 +301,7 @@ textarea{width:100%;resize:vertical;line-height:1.55}
         <h1>Reunión de Inicio de Jornada</h1>
         <div class="sub">Modelo 1·4·4·1 · Cafiver · Río Blanco</div>
       </div>
+      <span id="isoBadge" class="fb-badge" style="margin-left:6px"></span>
     </div>
     <div class="spacer"></div>
     <span id="fbBadge" class="fb-badge off">Modo local</span>
@@ -322,7 +323,7 @@ textarea{width:100%;resize:vertical;line-height:1.55}
   <!-- ============ PRESENTAR ============ -->
   <section id="presentar" class="view active">
     <div class="controls">
-      <div class="field"><label>Semana</label><select id="pSemana"></select></div>
+      <div class="field"><label>Semana <span id="isoBadgeMini" style="font-weight:400;color:#C7D400"></span></label><select id="pSemana"></select></div>
       <div class="field"><label>Día temático</label><select id="pDia"></select></div>
       <div class="spacer"></div>
       <button class="btn ghost sm" onclick="window.print()">Imprimir / PDF</button>
@@ -336,7 +337,7 @@ textarea{width:100%;resize:vertical;line-height:1.55}
 
   <!-- ============ PLAN RIJ ============ -->
   <section id="plan" class="view">
-    <div class="note">Plan de la <b id="planPlantaNombre"></b>. La semana que se muestra se calcula por la <b>semana calendario del año</b> (ISO), ciclando entre Semana 1 y Semana 4 — no se reinicia el día 1 de cada mes. Las áreas revisan aquí qué les toca preparar. El check verde indica que el contenido ya está cargado.</div>
+    <div class="note">Plan de la <b id="planPlantaNombre"></b>. Estamos en la <b id="isoBadgeNote">semana calendario —</b> del año, ciclando entre Semana 1 y Semana 4 del RIJ — no se reinicia el día 1 de cada mes. Las áreas revisan aquí qué les toca preparar. El check verde indica que el contenido ya está cargado.</div>
     <div class="controls">
       <button class="btn sm" id="btnLockPlan" style="display:flex;align-items:center;gap:7px"></button>
       <div class="spacer"></div>
@@ -607,6 +608,17 @@ function semanaISO(fecha){
 }
 function semanaCicloActual(){
   return ((semanaISO(new Date())-1)%SEMANAS)+1;
+}
+function renderIsoBadges(){
+  const hoy=new Date();
+  const iso=semanaISO(hoy);
+  const anio=hoy.getFullYear();
+  const b1=document.getElementById("isoBadge");
+  if(b1) b1.textContent=`Semana calendario ${iso} de ${anio}`;
+  const b2=document.getElementById("isoBadgeMini");
+  if(b2) b2.textContent=`· Semana calendario ${iso}/${anio}`;
+  const b3=document.getElementById("isoBadgeNote");
+  if(b3) b3.textContent=`semana calendario ${iso} de ${anio}`;
 }
 const AREAS_PROD = ["Envasado","Descafeinado","PSE","Mantenimiento","Almacén"];
 
@@ -1361,6 +1373,7 @@ function toast(m){
 }
 let yaFuiAHoy=false;
 function rebuildAll(){
+  renderIsoBadges();
   renderGate();
   if(!sesionActual) return; // el resto de la app espera a que haya sesión
   renderSesionChip();
