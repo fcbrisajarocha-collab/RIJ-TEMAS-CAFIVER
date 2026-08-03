@@ -760,6 +760,7 @@ function oneDriveEmbed(url){
 function ytEmbed(url){ const m=url.match(/(?:youtu\.be\/|v=|\/embed\/)([A-Za-z0-9_-]{6,})/); return m?`https://www.youtube.com/embed/${m[1]}`:null; }
 function renderPreview(url,key){
   if(!url) return "";
+  if(!/^https?:\/\//i.test(url) || url.includes("${") || url.includes("<")) return ""; // dato corrupto guardado antes de la validación: se ignora
   const abierto=PREVIEW_ABIERTO[key]!==false;
   const bar=`<div class="pv-bar">
       <button class="pv-btn" onclick="togglePreview('${key}')">${abierto?'Ocultar':'Ver'}</button>
@@ -922,7 +923,8 @@ function renderPresentar(){
   const sub=subtemaDe(d,s);
   const prev=renderPreview(rec.recurso,slotKey(d,s));
   const fecha=rec.ts?new Date(rec.ts).toLocaleDateString("es-MX",{day:"2-digit",month:"short",year:"numeric"}):"";
-  const link=rec.recurso?`<a href="${rec.recurso}" target="_blank" rel="noopener">Ver recurso ↗</a>`:`<span></span>`;
+  const recursoValido = rec.recurso && /^https?:\/\//i.test(rec.recurso) && !rec.recurso.includes("${") && !rec.recurso.includes("<");
+  const link=recursoValido?`<a href="${rec.recurso}" target="_blank" rel="noopener">Ver recurso ↗</a>`:`<span></span>`;
 
   document.getElementById("pContenido").innerHTML=`
     <div class="day-head" style="--acc:${t.color}">
@@ -1181,10 +1183,15 @@ async function guardarContenido(){
   const t=temaPorArea(areaActiva);
   const contenido=document.getElementById("eBody").value.trim();
   if(!contenido){ toast("Escribe el contenido"); return; }
+  let recurso=document.getElementById("eRec").value.trim();
+  if(recurso && (!/^https?:\/\//i.test(recurso) || recurso.includes("${") || recurso.includes("<") )){
+    toast("El campo Recurso no parece un link válido (debe empezar con https://). No se guardó.");
+    return;
+  }
   const objBase={
     dia:t.dia, semana:semanaEditor, area:t.area, tema:t.nombre,
     subtema:t.semanas[semanaEditor-1]||"", contenido,
-    recurso:document.getElementById("eRec").value.trim(),
+    recurso,
     autor:sesionActual.nombre, ts:Date.now()
   };
   if(comunEsteTema() && alcanceEditor==="todas"){
