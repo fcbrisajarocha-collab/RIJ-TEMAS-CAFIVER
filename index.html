@@ -741,6 +741,7 @@ document.querySelectorAll(".tab").forEach(t=>{
    ================================================================== */
 function driveId(url){
   if(!url) return null;
+  if(!/drive\.google\.com|docs\.google\.com/i.test(url)) return null; // evita confundir OneDrive u otros dominios que también usan ?id=
   let m=url.match(/\/file\/d\/([A-Za-z0-9_-]{20,})/); if(m) return m[1];
   m=url.match(/[?&]id=([A-Za-z0-9_-]{20,})/); if(m) return m[1];
   m=url.match(/\/document\/d\/([A-Za-z0-9_-]{20,})/)||url.match(/\/presentation\/d\/([A-Za-z0-9_-]{20,})/)||url.match(/\/spreadsheets\/d\/([A-Za-z0-9_-]{20,})/);
