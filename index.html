@@ -372,7 +372,7 @@ textarea{width:100%;resize:vertical;line-height:1.55}
     </div>
     <div class="controls">
       <div class="spacer"></div>
-      <a class="folder-link" style="--acc:#C7D400" href="https://drive.google.com/drive/folders/1XX5gqijQjLhbgfcAGS--njahEXg0AbXd" target="_blank" rel="noopener">📁 Carpeta maestra</a>
+      <a class="folder-link" id="btnCarpetaMaestra" style="--acc:#C7D400;display:none" target="_blank" rel="noopener">📁 Carpeta maestra OneDrive</a>
       <button class="btn sm" id="btnExcel">Exportar a Excel</button>
     </div>
     <div class="mx" id="matrix"></div>
@@ -575,17 +575,24 @@ const plantasDe = u => u.planta==="*" ? PLANTAS : PLANTAS.filter(p=>u.planta.inc
 const esSupervisor = u => u && u.rol==="supervisor";
 
 
-// Carpetas de Google Drive
-const DRIVE_MAESTRA = "https://drive.google.com/drive/folders/1XX5gqijQjLhbgfcAGS--njahEXg0AbXd";
-const DRIVE_FOLDERS = {
-  seguridad:      "https://drive.google.com/drive/folders/1HpLQFM1alSrtzCPQ_z-hfY5KN_KMt0BX",
-  calidad:        "https://drive.google.com/drive/folders/1h-cNYik_pid0ZMNrJMYfCNwoXsJcsg0n",
-  inocuidad:      "https://drive.google.com/drive/folders/16Zk-_oUmVBrB4ciAUYhQceqjPRRSkHeG",
-  ambiente:       "https://drive.google.com/drive/folders/1V3PH3CT9QGJ_4U5R46xYkCPFxcjwGsjd",
-  rendimiento:    "",   // pendiente de crear
-  produccion:     "",   // pendiente de crear
-  reconocimiento: ""    // pendiente de crear
+// --- Carpetas de OneDrive por área ---
+// Pega aquí el link de la carpeta compartida de OneDrive de cada área (botón "Compartir" en OneDrive/SharePoint).
+// Deja "" si aún no la tienes: el botón simplemente no aparece o cae en la carpeta maestra.
+const ONEDRIVE_MAESTRA = "";
+const ONEDRIVE_FOLDERS = {
+  seguridad:      "",
+  calidad:        "",
+  inocuidad:      "",
+  ambiente:       "",
+  rendimiento:    "",
+  produccion:     "",
+  reconocimiento: ""
 };
+// Enlaces anteriores de Google Drive (fuera de uso, se conservan solo como referencia histórica):
+// seguridad: https://drive.google.com/drive/folders/1HpLQFM1alSrtzCPQ_z-hfY5KN_KMt0BX
+// calidad:   https://drive.google.com/drive/folders/1h-cNYik_pid0ZMNrJMYfCNwoXsJcsg0n
+// inocuidad: https://drive.google.com/drive/folders/16Zk-_oUmVBrB4ciAUYhQceqjPRRSkHeG
+// ambiente:  https://drive.google.com/drive/folders/1V3PH3CT9QGJ_4U5R46xYkCPFxcjwGsjd
 
 // Estructura 1-4-4-1
 const AGENDA = [
@@ -726,7 +733,7 @@ document.querySelectorAll(".tab").forEach(t=>{
 });
 
 /* ==================================================================
-   GOOGLE DRIVE · PREVIEW
+   GOOGLE DRIVE / ONEDRIVE · PREVIEW
    ================================================================== */
 function driveId(url){
   if(!url) return null;
@@ -734,6 +741,17 @@ function driveId(url){
   m=url.match(/[?&]id=([A-Za-z0-9_-]{20,})/); if(m) return m[1];
   m=url.match(/\/document\/d\/([A-Za-z0-9_-]{20,})/)||url.match(/\/presentation\/d\/([A-Za-z0-9_-]{20,})/)||url.match(/\/spreadsheets\/d\/([A-Za-z0-9_-]{20,})/);
   return m?m[1]:null;
+}
+function esOneDrive(url){ return /1drv\.ms|onedrive\.live\.com|sharepoint\.com/i.test(url||""); }
+function oneDriveEmbed(url){
+  // OneDrive personal: agrega/city el parámetro embed. SharePoint/OneDrive empresarial: agrega action=embedview.
+  if(/onedrive\.live\.com/i.test(url)){
+    return url.includes("?") ? url.replace("redir?","embed?") : url;
+  }
+  if(/sharepoint\.com/i.test(url)){
+    return url + (url.includes("?") ? "&" : "?") + "action=embedview";
+  }
+  return url; // 1drv.ms (link corto): se intenta tal cual, el servidor redirige
 }
 function ytEmbed(url){ const m=url.match(/(?:youtu\.be\/|v=|\/embed\/)([A-Za-z0-9_-]{6,})/); return m?`https://www.youtube.com/embed/${m[1]}`:null; }
 function renderPreview(url,key){
@@ -749,6 +767,10 @@ function renderPreview(url,key){
     if(esDoc) return `<div class="prev">${bar}<iframe src="https://drive.google.com/file/d/${id}/preview" loading="lazy"></iframe></div>`;
     return `<div class="prev">${bar}<img src="https://drive.google.com/thumbnail?id=${id}&sz=w1200" loading="lazy" alt="Vista previa"
       onerror="this.outerHTML='<iframe src=&quot;https://drive.google.com/file/d/${id}/preview&quot; loading=&quot;lazy&quot;></iframe>'"></div>`;
+  }
+  if(esOneDrive(url)){
+    return `<div class="prev">${bar}<iframe src="${oneDriveEmbed(url)}" loading="lazy"
+      onerror="this.outerHTML='<div class=&quot;pv-fail&quot;>No se pudo mostrar la vista previa de OneDrive. Usa Abrir ↗.</div>'"></iframe></div>`;
   }
   if(/youtube\.com|youtu\.be/i.test(url)){ const e=ytEmbed(url); if(e) return `<div class="prev">${bar}<iframe src="${e}" allowfullscreen loading="lazy"></iframe></div>`; }
   if(/\.(png|jpe?g|gif|webp)$/i.test(url)) return `<div class="prev">${bar}<img src="${url}" loading="lazy" alt="Vista previa"></div>`;
@@ -1080,7 +1102,7 @@ function renderAreaBody(){
     const ok=DATA[slotKey(t.dia,s)]&&DATA[slotKey(t.dia,s)].contenido;
     return `<button class="wk-tab ${semanaEditor===s?'on':''}" style="--acc:${t.color}" onclick="setSemanaEditor(${s})">Semana ${s}${ok?'<span class="dotok"></span>':''}</button>`;
   }).join("");
-  const folder=DRIVE_FOLDERS[areaActiva];
+  const folder=ONEDRIVE_FOLDERS[areaActiva];
   const comun=esAreaComun(areaActiva);
   const modoTodas = plantaActiva==="TODAS";
   if(modoTodas) alcanceEditor='todas';
@@ -1105,13 +1127,13 @@ function renderAreaBody(){
     ${alcanceBox}
     <div class="form-row"><label>Contenido para el supervisor</label>
       <textarea id="eBody" rows="7" placeholder="Datos, indicadores y puntos clave que el supervisor transmitirá en los 4 minutos..."></textarea></div>
-    <div class="form-row"><label>Recurso (opcional · link de Drive, YouTube o imagen)</label>
-      <input type="text" id="eRec" placeholder="https://drive.google.com/file/d/..." oninput="previewEnEditor()">
-      <div class="drive-hint" style="--acc:${t.color}">Sube el archivo a Drive, dale <b>Compartir → Cualquiera con el enlace → Lector</b> y pega el link aquí.</div>
+    <div class="form-row"><label>Recurso (opcional · link de OneDrive, YouTube o imagen)</label>
+      <input type="text" id="eRec" placeholder="https://cafiver-my.sharepoint.com/... o https://1drv.ms/..." oninput="previewEnEditor()">
+      <div class="drive-hint" style="--acc:${t.color}">Sube el archivo a OneDrive, dale <b>Compartir → Cualquiera con el vínculo puede ver</b> y pega el link aquí.</div>
       <div id="eRecStatus" class="drive-hint" style="--acc:${t.color}"></div></div>
-    <div style="margin-bottom:16px">
-      <a class="folder-link" style="--acc:${t.color}" href="${folder||DRIVE_MAESTRA}" target="_blank" rel="noopener">📁 ${folder?'Abrir carpeta de '+t.nombre:'Abrir carpeta maestra en Drive'}</a>
-    </div>
+    ${(folder||ONEDRIVE_MAESTRA) ? `<div style="margin-bottom:16px">
+      <a class="folder-link" style="--acc:${t.color}" href="${folder||ONEDRIVE_MAESTRA}" target="_blank" rel="noopener">📁 ${folder?'Abrir carpeta de '+t.nombre:'Abrir carpeta maestra en OneDrive'}</a>
+    </div>` : ``}
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
       <button class="btn" onclick="guardarContenido()">Guardar contenido</button>
       <button class="btn ghost sm" onclick="limpiarEditor()">Limpiar</button></div>
@@ -1140,6 +1162,7 @@ function previewEnEditor(){
   const u=(document.getElementById("eRec")||{}).value||"";
   if(!u.trim()){ el.textContent=""; return; }
   if(driveId(u)) el.innerHTML='<b>✓ Link de Drive detectado</b> — se mostrará embebido.';
+  else if(esOneDrive(u)) el.innerHTML='<b>✓ Link de OneDrive detectado</b> — se intentará mostrar embebido (si tu tenant lo bloquea, siempre queda el botón "Abrir").';
   else if(/youtube\.com|youtu\.be/i.test(u)) el.innerHTML='<b>✓ Video detectado</b> — se mostrará embebido.';
   else if(/\.(png|jpe?g|gif|webp)$/i.test(u)) el.innerHTML='<b>✓ Imagen detectada</b> — se mostrará embebida.';
   else if(/^https?:\/\//i.test(u)) el.textContent='Link válido. Se mostrará como botón, sin vista previa.';
@@ -1260,6 +1283,8 @@ function renderAvisosLista(){
    ESTADO
    ================================================================== */
 function renderPanel(){
+  const btnCM=document.getElementById("btnCarpetaMaestra");
+  if(btnCM){ if(ONEDRIVE_MAESTRA){ btnCM.href=ONEDRIVE_MAESTRA; btnCM.style.display="inline-flex"; } else btnCM.style.display="none"; }
   const stTit=document.getElementById("estadoPlantaNombre");
   if(plantaActiva==="TODAS"){
     if(stTit) stTit.textContent="todas las plantas (resumen agregado)";
