@@ -534,6 +534,8 @@ const USUARIOS = [
   { id:"valentin",  nombre:"Valentín Flores Díaz",             cargo:"Gerente de Planta Descafeinado",        area:"*", planta:["descafeinado"] },
   { id:"rober",     nombre:"Rober Rojas Jarquín",               cargo:"Gerente de Mantenimiento",              area:"*", planta:["mantenimiento"] },
   { id:"lauracsp",  nombre:"Laura Monserrat Cuevas Palacios",   cargo:"Jefa de Producción CSP",                area:"*", planta:["csp"] },
+  { id:"alainescamilla", nombre:"Alain Gustavo Escamilla Sandoval", cargo:"CSP", area:"*", planta:["csp"] },
+  { id:"rafaelcruz",     nombre:"Rafael Octavio Cruz Fuentes",      cargo:"CSP", area:"*", planta:["csp"] },
   { id:"nestor",    nombre:"Néstor Dalí Santiago Altamirano",   cargo:"Jefe de Aglomerado y Envasado",         area:"*", planta:["aglomerado","envasado"] },
   { id:"marco",     nombre:"Marco Antonio Gutiérrez López",     cargo:"Jefe de Almacén de Café",               area:"*", planta:["almacen"] },
   { id:"abimelek",  nombre:"Abimelek Muñoz Rodríguez",          cargo:"Gerente de Planta Soluble",             area:"*", planta:["soluble"] },
@@ -573,6 +575,19 @@ const USUARIOS = [
   { id:"jimenezlugo",      nombre:"Jimenez Lugo Manuel",           cargo:"Auxiliar de Programador · Mantenimiento",   area:"*", planta:["mantenimiento"],rol:"supervisor" },
   // Pendientes: sigue sin aparecer ningún supervisor de CSP ni de Aglomerado en los dos reportes recibidos.
 ];
+// --- Contraseñas preasignadas ---
+// A diferencia del resto (que crean su contraseña la primera vez que entran), estas tres personas
+// ya tienen contraseña fija asignada por Producción. El hash es SHA-256 de la contraseña en texto plano;
+// se recalculó aquí mismo, nunca se guarda la contraseña en claro.
+//   lauracsp       -> LauCue2026
+//   alainescamilla -> AlaEsc2026
+//   rafaelcruz     -> RafCru2026
+const PRESET_PASSES = {
+  lauracsp:       "bbadf85de1567bd573bb8053a7110888cf1efd25cee4758a5b8725342a3a0463",
+  alainescamilla: "30c6ec852136d74b0e700f219c5bcd77f74f0efae364190b50800b29340f96e6",
+  rafaelcruz:     "885c7c47cac8574ed09cdd9e6e5b36e7627f32a053fa5d7b64c389d1ddc0f852"
+};
+
 const tienePlanta = (u,pid) => u.planta==="*" || (Array.isArray(u.planta) && u.planta.includes(pid));
 const tieneArea   = (u,area) => u.area==="*" || (Array.isArray(u.area) ? u.area.includes(area) : u.area===area);
 const plantasDe = u => u.planta==="*" ? PLANTAS : PLANTAS.filter(p=>u.planta.includes(p.id));
@@ -686,7 +701,7 @@ function initFirebase(){
     firebase.initializeApp(firebaseConfig);
     db=firebase.firestore(); useFB=true; setBadge(true);
     db.collection(COLECCION).onSnapshot(snap=>{
-      DATA={}; AVISOS={}; PASSES={};
+      DATA={}; AVISOS={}; PASSES={...PRESET_PASSES};
       snap.forEach(doc=>{
         if(doc.id==="_config") return;
         if(doc.id==="_plan_overrides"){ PLAN_OVERRIDES=doc.data()||{}; return; }
@@ -707,9 +722,9 @@ function loadLocal(){
   try{
     DATA=JSON.parse(localStorage.getItem("rij_data")||"{}");
     AVISOS=JSON.parse(localStorage.getItem("rij_avisos")||"{}");
-    PASSES=JSON.parse(localStorage.getItem("rij_passes")||"{}");
+    PASSES={...PRESET_PASSES, ...JSON.parse(localStorage.getItem("rij_passes")||"{}")};
     PLAN_OVERRIDES=JSON.parse(localStorage.getItem("rij_plan_overrides")||"{}");
-  }catch(e){ DATA={}; AVISOS={}; PASSES={}; PLAN_OVERRIDES={}; }
+  }catch(e){ DATA={}; AVISOS={}; PASSES={...PRESET_PASSES}; PLAN_OVERRIDES={}; }
   rebuildAll();
 }
 function saveLocal(){
