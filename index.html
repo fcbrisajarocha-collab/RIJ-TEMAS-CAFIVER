@@ -103,7 +103,7 @@ header{position:sticky;top:0;z-index:30;background:linear-gradient(180deg,#14161
 .gr-emblem{position:relative;text-align:center;z-index:1}
 .gr-img{max-width:min(80%,520px);height:auto;object-fit:contain}
 
-.sesion-chip{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:99px;padding:5px 6px 5px 12px;font-size:12.5px}
+.sesion-chip{display:flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:5px 6px 5px 12px;font-size:12.5px;flex-wrap:wrap}
 .sesion-chip .sc-n{font-weight:600}
 .sesion-chip .sc-c{font-family:var(--mono);font-size:9.5px;color:var(--muted)}
 .sesion-chip button{background:var(--panel-2);border:1px solid var(--line);border-radius:99px;padding:5px 11px;font-family:var(--mono);font-size:10px;color:var(--cream-dim)}
@@ -321,6 +321,18 @@ textarea{width:100%;resize:vertical;line-height:1.55}
     </div>
   </div>
 </header>
+
+<div id="passModal" class="gate hidden" style="z-index:110">
+  <div class="gate-card" style="max-width:380px;width:90%">
+    <div class="gate-namebox">Cambiar contraseña</div>
+    <div class="gate-cargobox" id="passModalNombre"></div>
+    <div class="gate-input"><span>🔒</span><input type="password" id="passActual" placeholder="Contraseña actual"></div>
+    <div class="gate-input"><span>🔒</span><input type="password" id="passNueva" placeholder="Nueva contraseña"></div>
+    <div class="gate-input"><span>🔒</span><input type="password" id="passNueva2" placeholder="Confirma la nueva"></div>
+    <button class="gate-submit" onclick="guardarCambioPass()">Guardar nueva contraseña</button>
+    <button class="gate-back" onclick="cerrarCambioPass()">Cancelar</button>
+  </div>
+</div>
 
 <main>
 
@@ -919,7 +931,33 @@ function renderSesionChip(){
   if(!sesionActual){ box.innerHTML=""; return; }
   const badgeLectura = esSupervisor(sesionActual) ? `<span class="pill-count" style="background:#3A3F4A;color:var(--cream-dim)">solo lectura</span>` : "";
   box.innerHTML=`<span><span class="sc-n">${esc(sesionActual.nombre.split(" ").slice(0,2).join(" "))}${badgeLectura}</span><br><span class="sc-c">${esc(sesionActual.cargo)}</span></span>
+    <button onclick="abrirCambioPass()">Cambiar contraseña</button>
     <button onclick="cerrarSesion()">Cerrar sesión</button>`;
+}
+function abrirCambioPass(){
+  if(!sesionActual) return;
+  document.getElementById("passModalNombre").textContent=sesionActual.nombre+" · "+sesionActual.cargo;
+  document.getElementById("passActual").value="";
+  document.getElementById("passNueva").value="";
+  document.getElementById("passNueva2").value="";
+  document.getElementById("passModal").classList.remove("hidden");
+  setTimeout(()=>document.getElementById("passActual").focus(),50);
+}
+function cerrarCambioPass(){ document.getElementById("passModal").classList.add("hidden"); }
+async function guardarCambioPass(){
+  const u=sesionActual; if(!u) return;
+  const actual=document.getElementById("passActual").value;
+  const n1=document.getElementById("passNueva").value;
+  const n2=document.getElementById("passNueva2").value;
+  const hActual=await hashPass(actual);
+  if(hActual!==PASSES[u.id]){ toast("Tu contraseña actual no coincide"); return; }
+  if(n1.length<4){ toast("La nueva contraseña debe tener al menos 4 caracteres"); return; }
+  if(n1!==n2){ toast("Las contraseñas nuevas no coinciden"); return; }
+  if(n1===actual){ toast("La nueva contraseña debe ser distinta a la actual"); return; }
+  const hNueva=await hashPass(n1);
+  await guardarPass(u.id,hNueva);
+  cerrarCambioPass();
+  toast("Contraseña actualizada ✓");
 }
 
 /* ==================================================================
