@@ -1217,7 +1217,8 @@ function renderAreaBody(){
     </div>` : ``}
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
       <button class="btn" onclick="guardarContenido()">Guardar contenido</button>
-      <button class="btn ghost sm" onclick="limpiarEditor()">Limpiar</button></div>
+      <button class="btn ghost sm" onclick="quitarSoloLink()" title="Borra únicamente el link guardado, sin tocar el texto del contenido">🗑 Quitar solo el link</button>
+      <button class="btn ghost sm" onclick="limpiarEditor()">Limpiar todo</button></div>
   </div>`;
   cargarEnEditor();
 }
@@ -1237,6 +1238,28 @@ function limpiarEditor(){
   document.getElementById("eBody").value="";
   document.getElementById("eRec").value="";
   previewEnEditor();
+}
+async function quitarSoloLink(){
+  const t=temaPorArea(areaActiva);
+  const key=slotKey(t.dia,semanaEditor);
+  const actual=DATA[key];
+  if(!actual || !actual.recurso){
+    document.getElementById("eRec").value="";
+    previewEnEditor();
+    toast("No había ningún link guardado en esta semana.");
+    return;
+  }
+  if(!confirm("¿Quitar el link guardado de esta semana? El contenido de texto no se toca.")) return;
+  document.getElementById("eRec").value="";
+  previewEnEditor();
+  const objBase=Object.assign({},actual,{recurso:"",ts:Date.now(),autor:sesionActual.nombre});
+  if(comunEsteTema() && alcanceEditor==="todas"){
+    await guardarSlotMasivo(t.dia,semanaEditor,objBase);
+    toast(`Link quitado en las ${PLANTAS.length} plantas ✓`);
+  }else{
+    await guardarSlot(key,Object.assign({},objBase,{planta:plantaActiva}));
+    toast(`Link quitado en Planta ${plantaObj(plantaActiva).nombre} ✓`);
+  }
 }
 function previewEnEditor(){
   const el=document.getElementById("eRecStatus"); if(!el) return;
