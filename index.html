@@ -1241,6 +1241,33 @@ function limpiarEditor(){
 }
 async function quitarSoloLink(){
   const t=temaPorArea(areaActiva);
+
+  if(plantaActiva==="TODAS"){
+    // En modo Masivo no existe una "planta TODAS" en la base de datos: hay que revisar cada una de las 7 plantas reales.
+    const conLink = PLANTAS.filter(p=>{
+      const r=DATA[slotKeyP(p.id,t.dia,semanaEditor)];
+      return r && r.recurso;
+    });
+    if(!conLink.length){
+      document.getElementById("eRec").value="";
+      previewEnEditor();
+      toast("No había ningún link guardado en ninguna planta para esta semana.");
+      return;
+    }
+    if(!confirm(`¿Quitar el link guardado en ${conLink.length} planta(s) para esta semana? El contenido de texto no se toca en ninguna.`)) return;
+    for(const p of conLink){
+      const k=slotKeyP(p.id,t.dia,semanaEditor);
+      const obj=Object.assign({},DATA[k],{recurso:"",ts:Date.now(),autor:sesionActual.nombre,masivo:true});
+      DATA[k]=obj;
+      if(useFB){ try{ await db.collection(COLECCION).doc(k).set(obj); }catch(e){ toast("Guardado local (sin conexión)"); } }
+    }
+    saveLocal(); rebuildAll();
+    document.getElementById("eRec").value="";
+    previewEnEditor();
+    toast(`Link quitado en ${conLink.length} planta(s) ✓`);
+    return;
+  }
+
   const key=slotKey(t.dia,semanaEditor);
   const actual=DATA[key];
   if(!actual || !actual.recurso){
@@ -1253,13 +1280,8 @@ async function quitarSoloLink(){
   document.getElementById("eRec").value="";
   previewEnEditor();
   const objBase=Object.assign({},actual,{recurso:"",ts:Date.now(),autor:sesionActual.nombre});
-  if(comunEsteTema() && alcanceEditor==="todas"){
-    await guardarSlotMasivo(t.dia,semanaEditor,objBase);
-    toast(`Link quitado en las ${PLANTAS.length} plantas ✓`);
-  }else{
-    await guardarSlot(key,Object.assign({},objBase,{planta:plantaActiva}));
-    toast(`Link quitado en Planta ${plantaObj(plantaActiva).nombre} ✓`);
-  }
+  await guardarSlot(key,Object.assign({},objBase,{planta:plantaActiva}));
+  toast(`Link quitado en Planta ${plantaObj(plantaActiva).nombre} ✓`);
 }
 function previewEnEditor(){
   const el=document.getElementById("eRecStatus"); if(!el) return;
