@@ -553,6 +553,7 @@ const USUARIOS = [
   { id:"abimelek",  nombre:"Abimelek Muñoz Rodríguez",          cargo:"Gerente de Planta Soluble",             area:"*", planta:["soluble"] },
   { id:"laurocal",  nombre:"Laura Aracely Heredia Barreda",     cargo:"Jefa de Gestión de Calidad e Inocuidad",            area:["calidad","inocuidad"],   planta:"*" },
   { id:"arianasanchez", nombre:"Ariana Sanchez Gamez",          cargo:"Coordinadora de Gestión de la Calidad e Inocuidad", area:["calidad","inocuidad"],   planta:"*" },
+  { id:"adrianguerrero", nombre:"Adrian Guerrero Hernandez",    cargo:"Gerente de Aseguramiento de Calidad",   area:"calidad", planta:"*" },
   { id:"gloria",    nombre:"Gloria Ana Gabriel Oropeza Miranda",cargo:"Jefa de Seguridad Industrial",          area:"seguridad", planta:"*" },
   { id:"francisco", nombre:"Francisco Iván Cajica Morales",     cargo:"Gerente de Proyectos y Automatización", area:"*", planta:"*" },
   { id:"akarimoreno",nombre:"Akari Moreno Guerra",            cargo:"Supervisor de Medio Ambiente",          area:"ambiente",  planta:"*" },
@@ -588,16 +589,47 @@ const USUARIOS = [
   // Pendientes: sigue sin aparecer ningún supervisor de CSP ni de Aglomerado en los dos reportes recibidos.
 ];
 // --- Contraseñas preasignadas ---
-// A diferencia del resto (que crean su contraseña la primera vez que entran), estas tres personas
-// ya tienen contraseña fija asignada por Producción. El hash es SHA-256 de la contraseña en texto plano;
-// se recalculó aquí mismo, nunca se guarda la contraseña en claro.
-//   lauracsp       -> LauCue2026
-//   alainescamilla -> AlaEsc2026
-//   rafaelcruz     -> RafCru2026
+// Todas creadas con la convención: primera letra en mayúscula del id + resto del id + 2026.
+// El hash es SHA-256 de la contraseña en texto plano; nunca se guarda la contraseña en claro aquí.
+// La tabla completa de nombre -> contraseña vive fuera del código, entregada aparte a Producción.
 const PRESET_PASSES = {
-  lauracsp:       "bbadf85de1567bd573bb8053a7110888cf1efd25cee4758a5b8725342a3a0463",
-  alainescamilla: "30c6ec852136d74b0e700f219c5bcd77f74f0efae364190b50800b29340f96e6",
-  rafaelcruz:     "885c7c47cac8574ed09cdd9e6e5b36e7627f32a053fa5d7b64c389d1ddc0f852"
+  adrianguerrero: "6aade984c02b05e7792d7f2056f61aea521bad14ab8d5ea9e90400ad0804cb4a", // AdrGue2026
+  lauracsp:       "bbadf85de1567bd573bb8053a7110888cf1efd25cee4758a5b8725342a3a0463", // LauCue2026
+  alainescamilla: "30c6ec852136d74b0e700f219c5bcd77f74f0efae364190b50800b29340f96e6", // AlaEsc2026
+  rafaelcruz:     "885c7c47cac8574ed09cdd9e6e5b36e7627f32a053fa5d7b64c389d1ddc0f852", // RafCru2026
+  valentin            : "2590213f701006b466ae20050914b2b8f0a165c70d662961d00d4426c8fc22db",
+  rober               : "026f2e36f5b95894f0572495770f854e33669dcf30a655dee09752a24a11bea3",
+  nestor              : "038c2986b6091c56039394760ecaf5d169fc5ffd8064f0c638847c647f57317f",
+  marco               : "55bb5273fe6b146c1fb131e5a7565bc1880dc15b77a8e5ace3438abdfef28c06",
+  abimelek            : "fa12e0bee22ae74449f454ff08ac3bb1d312bd201f51089e985165d8a7be8b53",
+  laurocal            : "c6505b71af01b7e9174d25b79353de47d592067945303609ecc8690911e906ed",
+  arianasanchez       : "4b24d2f45a83f39be013ddd538c9bf1a97077aeebf4c366afe7ca683d45f0737",
+  gloria              : "608dc9e7e0546fbcb235e04c981a1203860eb6408c4d874b9c8dc4974de0dc10",
+  francisco           : "ce948767ba2afe8d33faccea3385530cb9f550dcc0ec61df3fcde75fd1cdee0e",
+  akarimoreno         : "9a3579812d10bd17ca5d215d6c2370e44e4316326e3fd102e21ac90237ca447e",
+  manuelcorona        : "11541d07eedc2b27e755b14b808d83a9acc2d1b2146d1ccd334876f6664087cf",
+  martinbello         : "b6cb45dff6db23a13666985b181ad50f158bcce2fbc581c4e44f65a5923f6672",
+  antonioortega       : "eb2eb03bf9f75d37891c28a592479ade9634f098857ffa87fc144884c43a693a",
+  medinachico         : "022198248dd27b756b57503bb1221b548e754f60c2f281d504808d43e6498857",
+  rodriguezedu        : "c3d4778ed6bd2e1cebfb2e46805b4dcff07b922d289bd60547d59ff9e5f9beac",
+  carlosgarcia        : "ab2443c7918b25c476fc6ffe27bdca69c32eb23889d3679aabd1b367dfac6de6",
+  hernandezalfredo    : "f1642a90c82d98c4f114d40d2c798f1a1870eca375f8ab61c65671a68ac0853f",
+  crisostomovera      : "84a027e772dd0f81038f8e041c5561b13f7c129cb80afcf583f56b673dce6702",
+  balvincamacho       : "46501d9dbc3ef3117d42d22895133edf697557347ff4cb3677a90d7ecd24133d",
+  aaronhuerta         : "c15cee8dbf434d03eb506908c3084c18f3aba2cb09cdffce0af43c496d391016",
+  luiscalderon        : "c6e03f3d84be8bc4a9a459b5e36114e78a80277e3cf49d74de93bc92213e9811",
+  juanarguelles       : "2b4b629bc648b5042da7af7f56832021baa45aa27261f18330b15e82f4489032",
+  joseluislazaro      : "b382e1c4a543a447f14a7fc7dfd77e82824e6dbb0afa22ae069d7373908cacf9",
+  abielramirez        : "d49d32ecc6f65cbdc53c4048ed980ba2215aa0e4f044a0d177d642779dd3c845",
+  huertarioselroul    : "7523683110924885206151760480d00c69805818450c457ff995166fd769f706",
+  martingarate        : "7cdc013d339bbde60ea1db5f2ade07461f5fc0918eae8001f209bc7d3ec7d487",
+  juanlopezl          : "d5063b0d251ac41cf8ca538cd6fe15e966fe6da258e43e7d435e380faa7beb73",
+  israelaranda        : "a92c1ef348972efc853710986ae807e7ab3d17770c7f24dee1994e54461dbc2b",
+  josearturoortiz     : "1fd8251cd807852b5155b6b67fdc453860d21e460946e574bd89a6caf5f01eed",
+  valentinmartinez    : "55ca8bafcd8b4a445b230fa7f2f0cd70b889b0821c544451ce33469711e2f952",
+  medardolopez        : "478e44e865eb5e0b128d92c43ab02c9f834e376f88ac31b1515f42006b761caa",
+  jacquelineluna      : "9e85ff408fc5d1f03e7350648f0b110c114d7aab7361f2691351f2b57c3921cc",
+  jimenezlugo         : "2ca8633db02e03d89a73bd4ad7bd50ae041ead9c46a9229643ae463f5d53e54c",
 };
 
 const tienePlanta = (u,pid) => u.planta==="*" || (Array.isArray(u.planta) && u.planta.includes(pid));
