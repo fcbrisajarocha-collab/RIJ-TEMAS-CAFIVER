@@ -549,6 +549,9 @@ const USUARIOS = [
   { id:"alainescamilla", nombre:"Alain Gustavo Escamilla Sandoval", cargo:"CSP", area:"*", planta:["csp"] },
   { id:"rafaelcruz",     nombre:"Rafael Octavio Cruz Fuentes",      cargo:"CSP", area:"*", planta:["csp"] },
   { id:"nestor",    nombre:"Néstor Dalí Santiago Altamirano",   cargo:"Jefe de Aglomerado y Envasado",         area:"*", planta:["aglomerado","envasado"] },
+  { id:"joseluishernandez", nombre:"Jose Luis Hernandez Ramirez", cargo:"Envasado", area:"*", planta:["envasado"] },
+  { id:"germainapale",      nombre:"Germain Apale Jorge",         cargo:"Envasado", area:"*", planta:["envasado"] },
+  { id:"samuelcortes",      nombre:"Samuel Cortes Beltran",       cargo:"Envasado", area:"*", planta:["envasado"] },
   { id:"marco",     nombre:"Marco Antonio Gutiérrez López",     cargo:"Jefe de Almacén de Café",               area:"*", planta:["almacen"] },
   { id:"abimelek",  nombre:"Abimelek Muñoz Rodríguez",          cargo:"Gerente de Planta Soluble",             area:"*", planta:["soluble"] },
   { id:"laurocal",  nombre:"Laura Aracely Heredia Barreda",     cargo:"Jefa de Gestión de Calidad e Inocuidad",            area:["calidad","inocuidad"],   planta:"*" },
@@ -593,6 +596,9 @@ const USUARIOS = [
 // El hash es SHA-256 de la contraseña en texto plano; nunca se guarda la contraseña en claro aquí.
 // La tabla completa de nombre -> contraseña vive fuera del código, entregada aparte a Producción.
 const PRESET_PASSES = {
+  joseluishernandez: "69afcd330bca2a43f03e76453fba3ef71d520e117af8a6f468f9c823adb96a8f", // 50280
+  germainapale:      "c1f21ea80491741b1ef3ccee4c29a41796007eaf75344f2d501d2db4c0bd6a64", // 50902
+  samuelcortes:       "5b84e491eae7f845a9ca344b3387898404b02c6008917be9690b4afb84eb0322", // SamCor2026
   adrianguerrero: "6aade984c02b05e7792d7f2056f61aea521bad14ab8d5ea9e90400ad0804cb4a", // AdrGue2026
   lauracsp:       "bbadf85de1567bd573bb8053a7110888cf1efd25cee4758a5b8725342a3a0463", // LauCue2026
   alainescamilla: "30c6ec852136d74b0e700f219c5bcd77f74f0efae364190b50800b29340f96e6", // AlaEsc2026
