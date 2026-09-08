@@ -396,6 +396,14 @@ textarea{width:100%;resize:vertical;line-height:1.55}
       <h3>Ciclo</h3>
       <div class="help">El plan RIJ tiene 7 días temáticos × 4 semanas = 28 sesiones, y la semana activa se calcula por la semana calendario ISO del año (se repite cada 4 semanas de forma continua, sin reiniciar por mes). Para cambiar los subtemas, edita la constante <b>PLAN</b> al inicio del script.</div>
     </div>
+    <div class="config" id="zonaReinicio" style="border-color:#E8871E55;display:none">
+      <h3 style="color:#E8871E">⚠ Reiniciar información del mes</h3>
+      <div class="help">Como el plan solo tiene 4 casillas por tema (Semana 1-4) que se reutilizan sin parar, el contenido de hace un mes se queda ahí hasta que alguien lo sobrescribe. Este botón borra todo el <b>contenido cargado</b> (texto y links) para empezar el mes en blanco — <b>no borra</b> los subtemas del plan maestro, ni los avisos, ni las contraseñas.</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+        <button class="btn ghost sm" style="border-color:#E8871E;color:#E8871E" onclick="reiniciarMes('planta')" id="btnReiniciarPlanta">🗑 Reiniciar solo esta planta</button>
+        <button class="btn ghost sm" style="border-color:#E8871E;color:#E8871E;display:none" onclick="reiniciarMes('todas')" id="btnReiniciarTodas">🗑 Reiniciar las 7 plantas</button>
+      </div>
+    </div>
   </section>
 
   <!-- ============ SISTEMAS ============ -->
@@ -1254,7 +1262,7 @@ function renderAreaBody(){
       <a class="folder-link" style="--acc:${t.color}" href="${folder||ONEDRIVE_MAESTRA}" target="_blank" rel="noopener">📁 ${folder?'Abrir carpeta de '+t.nombre:'Abrir carpeta maestra en OneDrive'}</a>
     </div>` : ``}
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-      <button class="btn" onclick="guardarContenido()">Guardar contenido</button>
+      <button class="btn" id="btnGuardarContenido" onclick="guardarContenido()">Guardar contenido</button>
       <button class="btn ghost sm" onclick="quitarSoloLink()" title="Borra únicamente el link guardado, sin tocar el texto del contenido">🗑 Quitar solo el link</button>
       <button class="btn ghost sm" onclick="limpiarEditor()">Limpiar todo</button></div>
   </div>`;
@@ -1341,6 +1349,9 @@ async function guardarContenido(){
     toast("El campo Recurso no parece un link válido (debe empezar con https://). No se guardó.");
     return;
   }
+  const btn=document.getElementById("btnGuardarContenido");
+  const textoOriginal=btn?btn.textContent:"";
+  if(btn){ btn.disabled=true; btn.textContent="Guardando…"; }
   const objBase={
     dia:t.dia, semana:semanaEditor, area:t.area, tema:t.nombre,
     subtema:t.semanas[semanaEditor-1]||"", contenido,
@@ -1348,7 +1359,7 @@ async function guardarContenido(){
     autor:sesionActual.nombre, ts:Date.now()
   };
   if(comunEsteTema() && alcanceEditor==="todas"){
-    if(!confirm(`Vas a publicar en las ${PLANTAS.length} plantas a la vez. ¿Confirmas?`)) return;
+    if(!confirm(`Vas a publicar en las ${PLANTAS.length} plantas a la vez. ¿Confirmas?`)){ if(btn){btn.disabled=false; btn.textContent=textoOriginal;} return; }
     await guardarSlotMasivo(t.dia,semanaEditor,objBase);
     toast(`Semana ${semanaEditor} publicada en ${PLANTAS.length} plantas ✓`);
   }else{
@@ -1356,6 +1367,11 @@ async function guardarContenido(){
     toast(`Semana ${semanaEditor} guardada en Planta ${plantaObj(plantaActiva).nombre} ✓`);
   }
   document.querySelectorAll("#wkTabsBox .wk-tab")[semanaEditor-1].innerHTML=`Semana ${semanaEditor}<span class="dotok"></span>`;
+  if(btn){
+    btn.textContent="✓ Guardado";
+    btn.style.background="#4FB05A";
+    setTimeout(()=>{ if(document.getElementById("btnGuardarContenido")){ btn.disabled=false; btn.textContent=textoOriginal; btn.style.background=""; } },2500);
+  }
 }
 
 /* ==================================================================
@@ -1454,6 +1470,14 @@ function renderAvisosLista(){
 function renderPanel(){
   const btnCM=document.getElementById("btnCarpetaMaestra");
   if(btnCM){ if(ONEDRIVE_MAESTRA){ btnCM.href=ONEDRIVE_MAESTRA; btnCM.style.display="inline-flex"; } else btnCM.style.display="none"; }
+  const zona=document.getElementById("zonaReinicio");
+  const bPlanta=document.getElementById("btnReiniciarPlanta");
+  const bTodas=document.getElementById("btnReiniciarTodas");
+  if(zona && sesionActual && sesionActual.area==="*" && !esSupervisor(sesionActual)){
+    zona.style.display="block";
+    if(bPlanta) bPlanta.style.display = plantaActiva==="TODAS" ? "none" : "inline-flex";
+    if(bTodas) bTodas.style.display = sesionActual.planta==="*" ? "inline-flex" : "none";
+  } else if(zona){ zona.style.display="none"; }
   const stTit=document.getElementById("estadoPlantaNombre");
   if(plantaActiva==="TODAS"){
     if(stTit) stTit.textContent="todas las plantas (resumen agregado)";
@@ -1498,6 +1522,37 @@ function renderPanel(){
     h+=`</div>`;
   });
   document.getElementById("matrix").innerHTML=h;
+}
+async function reiniciarMes(alcance){
+  if(!sesionActual || sesionActual.area!=="*" || esSupervisor(sesionActual)){ toast("No tienes permiso para esta acción"); return; }
+  let plantasBorrar;
+  if(alcance==="todas"){
+    if(sesionActual.planta!=="*"){ toast("Solo Dirección Técnica puede reiniciar las 7 plantas"); return; }
+    plantasBorrar=PLANTAS;
+  }else{
+    if(plantaActiva==="TODAS"){ toast("Elige primero una planta específica arriba"); return; }
+    plantasBorrar=[plantaObj(plantaActiva)];
+  }
+  const nombres=plantasBorrar.map(p=>p.nombre).join(", ");
+  if(!confirm(`Vas a borrar TODO el contenido cargado (texto y links) de: ${nombres}.\n\nLos subtemas del plan, los avisos y las contraseñas NO se tocan.\n\n¿Continuar?`)) return;
+  const palabra=prompt(`Para confirmar, escribe la palabra REINICIAR en mayúsculas:`);
+  if(palabra!=="REINICIAR"){ toast("Cancelado: no coincidió la palabra de confirmación"); return; }
+
+  let borrados=0;
+  for(const p of plantasBorrar){
+    for(const t of PLAN){
+      for(let s=1;s<=SEMANAS;s++){
+        const k=slotKeyP(p.id,t.dia,s);
+        if(DATA[k]){
+          delete DATA[k];
+          borrados++;
+          if(useFB){ try{ await db.collection(COLECCION).doc(k).delete(); }catch(e){} }
+        }
+      }
+    }
+  }
+  saveLocal(); rebuildAll();
+  toast(`Reinicio completo: ${borrados} casilla(s) borradas en ${nombres} ✓`);
 }
 function irA(d,s){
   document.getElementById("pDia").value=d;
